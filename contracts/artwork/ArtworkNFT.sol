@@ -12,7 +12,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "../libraries/TransferHelper.sol";
 
-
 contract ArtworkNFT is ERC721URIStorage, Ownable {
     uint256 public nextTokenId = 1;
     uint256 MAX_ROYALTIES = 10000;
