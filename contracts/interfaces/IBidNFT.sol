@@ -22,7 +22,6 @@ interface IBidNFT {
 
     function bidToken(uint256 _tokenId, uint256 _price) external;
 
-    function updateBidPrice(uint256 _tokenId, uint256 _price) external;
 
     function sellTokenTo(uint256 _tokenId, address _to) external;
 
