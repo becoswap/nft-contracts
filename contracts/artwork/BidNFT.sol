@@ -229,9 +229,8 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         uint256 royaltyAmount = price.mul(royalties).div(100);
         if (royaltyAmount > 0) {
             quoteErc20.safeTransfer(creator, royaltyAmount);
-            price = price.sub(royaltyAmount);
         }
-        quoteErc20.safeTransfer(sellers[_tokenId], price.sub(feeAmount));
+        quoteErc20.safeTransfer(sellers[_tokenId], price.sub(royaltyAmount).sub(feeAmount));
         address seller = sellers[_tokenId];
         delete prices[_tokenId];
         delete sellers[_tokenId];

@@ -14,7 +14,7 @@ import "../libraries/TransferHelper.sol";
 
 contract ArtworkNFT is ERC721URIStorage, Ownable {
     uint256 public nextTokenId = 1;
-    uint256 MAX_ROYALTIES = 10000;
+    uint256 MAX_ROYALTIES = 50;
     address public mintFeeAddr;
     uint256 public mintFeeAmount;
     mapping(uint256 => Profile) public profiles;
