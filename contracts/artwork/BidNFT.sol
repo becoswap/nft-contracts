@@ -44,9 +44,9 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     );
     event Ask(address indexed seller, uint256 indexed tokenId, uint256 price);
     event CancelSellToken(address indexed seller, uint256 indexed tokenId);
-    event FeeAddressTransferred(
-        address indexed previousOwner,
-        address indexed newOwner
+    event UpdatedFeeAddress(
+        address indexed previousFeeAddr,
+        address indexed newFeeAddr
     );
     event SetFeePercent(
         address indexed seller,
@@ -71,7 +71,7 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         quoteErc20 = IERC20(_quoteErc20Address);
         feeAddr = _feeAddr;
         feePercent = _feePercent;
-        emit FeeAddressTransferred(address(0), feeAddr);
+        emit UpdatedFeeAddress(address(0), feeAddr);
         emit SetFeePercent(_msgSender(), 0, feePercent);
     }
 
@@ -265,10 +265,9 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 			return bids;
     }
 
-    function transferFeeAddress(address _feeAddr) public {
-        require(_msgSender() == feeAddr, "FORBIDDEN");
-        feeAddr = _feeAddr;
-        emit FeeAddressTransferred(_msgSender(), feeAddr);
+    function setFeeAddress(address _feeAddr) public onlyOwner{
+			emit UpdatedFeeAddress(feeAddr, _feeAddr);
+			feeAddr = _feeAddr;
     }
 
     function setFeePercent(uint256 _feePercent) public onlyOwner {

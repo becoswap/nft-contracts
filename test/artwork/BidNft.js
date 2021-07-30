@@ -75,4 +75,18 @@ contract("BidNFT", accounts => {
     bids = await bidNft.getBids(1);
     assert.equal(bids.length, 0)
   })
+
+  it("setFeePercent", async () => {
+    const bidNft = await BidNFT.deployed();
+
+    await expectRevert(bidNft.setFeePercent(10, {from: accounts[1]}), "caller is not the owner")
+    await bidNft.setFeePercent(10, {from: accounts[0]})
+  })
+
+  it("setFeeAddress", async () => {
+    const bidNft = await BidNFT.deployed();
+
+    await expectRevert(bidNft.setFeeAddress(accounts[1], {from: accounts[1]}), "caller is not the owner")
+    await bidNft.setFeeAddress(accounts[1], {from: accounts[0]})
+  })
 })
