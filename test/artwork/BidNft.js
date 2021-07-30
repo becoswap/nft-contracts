@@ -61,6 +61,7 @@ contract("BidNFT", accounts => {
     assert.equal(bal.toString(), 0)
 
     await expectRevert(bidNft.sellTokenTo(1, accounts[2], {from: accounts[0]}), "Only Seller can sell token")
+    await expectRevert(bidNft.sellTokenTo(1, accounts[5], {from: accounts[1]}), "bidder not found")
     await bidNft.sellTokenTo(1, accounts[2], {from: accounts[1]});
     bal = await erc20.balanceOf(accounts[1]);
     assert.equal(bal.toString(), 86)
