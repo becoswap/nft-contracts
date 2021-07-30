@@ -33,7 +33,6 @@ contract ArtworkNFT is ERC721URIStorage, Ownable {
     
     function setProfile(uint256 tokenId, address _creator, uint256 _royalties) public {
         require(profiles[tokenId].creator == _msgSender(), "only creator");
-        require(_msgSender() != _creator, "yourself");
         require(_royalties <= MAX_ROYALTIES, "max royalties");
         _setProfile(tokenId, _creator, _royalties);
     }
