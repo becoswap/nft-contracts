@@ -11,11 +11,13 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IArtworkNFT.sol";
+import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
 contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using Address for address;
+		using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 MAX_BID = 100;
 
@@ -31,7 +33,7 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     mapping(uint256 => uint256) public prices;
     mapping(uint256 => address) public sellers;
     mapping(uint256 => mapping(address => uint256)) userBidPrice;
-    mapping(uint256 => BidEntry[]) public tokenBids;
+    mapping(uint256 => EnumerableSet.AddressSet) private tokenBids;
 
     event Trade(
         address indexed seller,
@@ -179,35 +181,25 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         if (userBidPrice[_tokenId][msg.sender] > 0) {
             updateBidPrice(_tokenId, _price);
         } else {
-            require(tokenBids[_tokenId].length < MAX_BID, "max bid");
             quoteErc20.safeTransferFrom(_msgSender(), address(this), _price);
             userBidPrice[_tokenId][msg.sender] = _price;
-            tokenBids[_tokenId].push(
-                BidEntry({bidder: msg.sender, price: _price})
-            );
+						tokenBids[_tokenId].add(msg.sender);
         }
         emit Bid(msg.sender, _tokenId, _price);
     }
 
     function updateBidPrice(uint256 _tokenId, uint256 _price) private {
-        uint256 bidLength = tokenBids[_tokenId].length;
-        for (uint256 i = 0; i < bidLength; i++) {
-            if (tokenBids[_tokenId][i].bidder == msg.sender) {
-                uint256 currentPrice = tokenBids[_tokenId][i].price;
-                if (_price > currentPrice) {
-                    quoteErc20.safeTransferFrom(
-                        address(_msgSender()),
-                        address(this),
-                        _price - currentPrice
-                    );
-                } else {
-                    quoteErc20.safeTransfer(msg.sender, currentPrice - _price);
-                }
-                tokenBids[_tokenId][i].price = _price;
-                userBidPrice[_tokenId][msg.sender] = _price;
-                return;
-            }
-        }
+			uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
+			if (_price > currentPrice) {
+					quoteErc20.safeTransferFrom(
+							address(_msgSender()),
+							address(this),
+							_price - currentPrice
+					);
+			} else {
+					quoteErc20.safeTransfer(msg.sender, currentPrice - _price);
+			}
+			userBidPrice[_tokenId][msg.sender] = _price;
     }
 
     function sellTokenTo(uint256 _tokenId, address _to) public override {
@@ -216,7 +208,6 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 					"Only Seller can sell token"
         );
         uint256 price = getUserBidPriceAndRemove(_tokenId, _to);
-        require(price > 0, "bidder not found");
         nft.safeTransferFrom(address(this), _to, _tokenId);
 
         uint256 feeAmount = price.mul(feePercent).div(100);
@@ -242,38 +233,36 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         private
         returns (uint256)
     {
-        uint256 bidLength = tokenBids[_tokenId].length;
-        for (uint256 i = 0; i < bidLength; i++) {
-            if (tokenBids[_tokenId][i].bidder == bidder) {
-                uint256 price = tokenBids[_tokenId][i].price;
-                tokenBids[_tokenId][i] = tokenBids[_tokenId][bidLength - 1];
-                tokenBids[_tokenId].pop();
-                return price;
-            }
-        }
-        return 0;
+			require(tokenBids[_tokenId].contains(bidder), "bidder not found");
+			uint256 price = userBidPrice[_tokenId][bidder];
+			tokenBids[_tokenId].remove(bidder);
+			delete userBidPrice[_tokenId][bidder];
+      return price;
     }
 
     function cancelBidToken(uint256 _tokenId) public override whenNotPaused {
-        require(userBidPrice[_tokenId][msg.sender] > 0, "Bidder not found");
-        uint256 bidLength = tokenBids[_tokenId].length;
-        for (uint256 i = 0; i < bidLength; i++) {
-            if (tokenBids[_tokenId][i].bidder == msg.sender) {
-                quoteErc20.safeTransfer(
-                    msg.sender,
-                    tokenBids[_tokenId][i].price
-                );
-                tokenBids[_tokenId][i] = tokenBids[_tokenId][bidLength - 1];
-                tokenBids[_tokenId].pop();
-                userBidPrice[_tokenId][msg.sender] = 0;
-                emit CancelBidToken(msg.sender, _tokenId);
-                return;
-            }
-        }
+      require(userBidPrice[_tokenId][msg.sender] > 0, "Bidder not found");
+			uint256 price = userBidPrice[_tokenId][msg.sender];
+			quoteErc20.safeTransfer(
+				msg.sender,
+				price
+			);
+			userBidPrice[_tokenId][msg.sender] = 0;
+			tokenBids[_tokenId].remove(msg.sender);
+			emit CancelBidToken(msg.sender, _tokenId);
+			
     }
 
     function getBids(uint256 _tokenId) public view returns (BidEntry[] memory) {
-        return tokenBids[_tokenId];
+			BidEntry[] memory bids = new BidEntry[](tokenBids[_tokenId].length());
+			for (uint i = 0; i < tokenBids[_tokenId].length(); i ++) {
+				address bidder = tokenBids[_tokenId].at(i);
+				bids[i] = BidEntry({
+					bidder: bidder,
+					price: userBidPrice[_tokenId][bidder]
+				});
+			}
+			return bids;
     }
 
     function transferFeeAddress(address _feeAddr) public {
