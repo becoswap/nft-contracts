@@ -6,9 +6,6 @@ const { expectRevert } = require('@openzeppelin/test-helpers');
 const dead = "0x000000000000000000000000000000000000dead";
 
 contract("BidNFT", accounts => {
-
-
-
   it("sell", async () => {
     const erc20 = await TestErc20.deployed();
     await erc20.mint(101, {from: accounts[1]});
@@ -24,6 +21,12 @@ contract("BidNFT", accounts => {
     await expectRevert(bidNft.readyToSellToken(1, 100, {from: accounts[1]}), "Only Token Owner can sell token")
     await expectRevert(bidNft.readyToSellToken(1, 0), "Price must be granter than zero")
     await  bidNft.readyToSellToken(1, 100);
+
+    await expectRevert(bidNft.cancelSellToken(1, {from: accounts[1]}), "Only Seller can cancel sell token")
+    await bidNft.cancelSellToken(1, {from: accounts[0]});
+    await artworkNFT.approve(bidNft.address, 1);
+    await  bidNft.readyToSellToken(1, 100);
+
 
     await expectRevert(bidNft.buyToken(2, {from: accounts[1]}), "Token not in sell book")    
     await expectRevert(bidNft.buyToken(1, {from: accounts[5]}), "transfer amount exceeds balance")    
@@ -57,7 +60,8 @@ contract("BidNFT", accounts => {
     bal = await erc20.balanceOf(accounts[2]);
     assert.equal(bal.toString(), 0)
 
-    await bidNft.sellTokenTo(1, accounts[2]);
+    await expectRevert(bidNft.sellTokenTo(1, accounts[2], {from: accounts[0]}), "Only Seller can sell token")
+    await bidNft.sellTokenTo(1, accounts[2], {from: accounts[1]});
     bal = await erc20.balanceOf(accounts[1]);
     assert.equal(bal.toString(), 86)
 
