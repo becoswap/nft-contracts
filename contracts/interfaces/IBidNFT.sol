@@ -2,11 +2,14 @@
 
 pragma solidity >=0.6.2;
 
-
 interface IBidNFT {
-    function buyToken(uint256 _tokenId) external;
+    function buyToken(uint256 _tokenId, uint256 _price) external;
 
-    function buyTokenTo(uint256 _tokenId, address _to) external;
+    function buyTokenTo(
+        uint256 _tokenId,
+        address _to,
+        uint256 _price
+    ) external;
 
     function setCurrentPrice(uint256 _tokenId, uint256 _price) external;
 
@@ -22,8 +25,11 @@ interface IBidNFT {
 
     function bidToken(uint256 _tokenId, uint256 _price) external;
 
-
-    function sellTokenTo(uint256 _tokenId, address _to) external;
+    function sellTokenTo(
+        uint256 _tokenId,
+        address _to,
+        uint256 _price
+    ) external;
 
     function cancelBidToken(uint256 _tokenId) external;
 }

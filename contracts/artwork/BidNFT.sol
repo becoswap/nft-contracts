@@ -17,7 +17,7 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using Address for address;
-		using EnumerableSet for EnumerableSet.AddressSet;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     uint256 MAX_BID = 100;
 
@@ -75,17 +75,22 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         emit SetFeePercent(_msgSender(), 0, feePercent);
     }
 
-    function buyToken(uint256 _tokenId) public override whenNotPaused {
-        buyTokenTo(_tokenId, _msgSender());
-    }
-
-    function buyTokenTo(uint256 _tokenId, address _to)
+    function buyToken(uint256 _tokenId, uint256 _price)
         public
         override
         whenNotPaused
     {
+        buyTokenTo(_tokenId, _msgSender(), _price);
+    }
+
+    function buyTokenTo(
+        uint256 _tokenId,
+        address _to,
+        uint256 _price
+    ) public override whenNotPaused {
         uint256 price = prices[_tokenId];
         require(price > 0, "Token not in sell book");
+        require(price == _price, "invalid price");
 
         nft.safeTransferFrom(address(this), _to, _tokenId);
         uint256 feeAmount = price.mul(feePercent).div(100);
@@ -183,31 +188,36 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         } else {
             quoteErc20.safeTransferFrom(_msgSender(), address(this), _price);
             userBidPrice[_tokenId][msg.sender] = _price;
-						tokenBids[_tokenId].add(msg.sender);
+            tokenBids[_tokenId].add(msg.sender);
         }
         emit Bid(msg.sender, _tokenId, _price);
     }
 
     function updateBidPrice(uint256 _tokenId, uint256 _price) private {
-			uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
-			if (_price > currentPrice) {
-					quoteErc20.safeTransferFrom(
-							address(_msgSender()),
-							address(this),
-							_price - currentPrice
-					);
-			} else {
-					quoteErc20.safeTransfer(msg.sender, currentPrice - _price);
-			}
-			userBidPrice[_tokenId][msg.sender] = _price;
+        uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
+        if (_price > currentPrice) {
+            quoteErc20.safeTransferFrom(
+                address(_msgSender()),
+                address(this),
+                _price - currentPrice
+            );
+        } else {
+            quoteErc20.safeTransfer(msg.sender, currentPrice - _price);
+        }
+        userBidPrice[_tokenId][msg.sender] = _price;
     }
 
-    function sellTokenTo(uint256 _tokenId, address _to) public override whenNotPaused{
+    function sellTokenTo(
+        uint256 _tokenId,
+        address _to,
+        uint256 _price
+    ) public override whenNotPaused {
         require(
-					sellers[_tokenId] == _msgSender(),
-					"Only Seller can sell token"
+            sellers[_tokenId] == _msgSender(),
+            "Only Seller can sell token"
         );
         uint256 price = getUserBidPriceAndRemove(_tokenId, _to);
+        require(price == _price, "invalid price");
         nft.safeTransferFrom(address(this), _to, _tokenId);
 
         uint256 feeAmount = price.mul(feePercent).div(100);
@@ -221,7 +231,10 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         if (royaltyAmount > 0) {
             quoteErc20.safeTransfer(creator, royaltyAmount);
         }
-        quoteErc20.safeTransfer(sellers[_tokenId], price.sub(royaltyAmount).sub(feeAmount));
+        quoteErc20.safeTransfer(
+            sellers[_tokenId],
+            price.sub(royaltyAmount).sub(feeAmount)
+        );
         address seller = sellers[_tokenId];
         delete prices[_tokenId];
         delete sellers[_tokenId];
@@ -233,41 +246,37 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         private
         returns (uint256)
     {
-			require(tokenBids[_tokenId].contains(bidder), "bidder not found");
-			uint256 price = userBidPrice[_tokenId][bidder];
-			tokenBids[_tokenId].remove(bidder);
-			delete userBidPrice[_tokenId][bidder];
-      return price;
+        require(tokenBids[_tokenId].contains(bidder), "bidder not found");
+        uint256 price = userBidPrice[_tokenId][bidder];
+        tokenBids[_tokenId].remove(bidder);
+        delete userBidPrice[_tokenId][bidder];
+        return price;
     }
 
     function cancelBidToken(uint256 _tokenId) public override whenNotPaused {
-      require(userBidPrice[_tokenId][msg.sender] > 0, "Bidder not found");
-			uint256 price = userBidPrice[_tokenId][msg.sender];
-			quoteErc20.safeTransfer(
-				msg.sender,
-				price
-			);
-			userBidPrice[_tokenId][msg.sender] = 0;
-			tokenBids[_tokenId].remove(msg.sender);
-			emit CancelBidToken(msg.sender, _tokenId);
-			
+        require(userBidPrice[_tokenId][msg.sender] > 0, "Bidder not found");
+        uint256 price = userBidPrice[_tokenId][msg.sender];
+        quoteErc20.safeTransfer(msg.sender, price);
+        userBidPrice[_tokenId][msg.sender] = 0;
+        tokenBids[_tokenId].remove(msg.sender);
+        emit CancelBidToken(msg.sender, _tokenId);
     }
 
     function getBids(uint256 _tokenId) public view returns (BidEntry[] memory) {
-			BidEntry[] memory bids = new BidEntry[](tokenBids[_tokenId].length());
-			for (uint i = 0; i < tokenBids[_tokenId].length(); i ++) {
-				address bidder = tokenBids[_tokenId].at(i);
-				bids[i] = BidEntry({
-					bidder: bidder,
-					price: userBidPrice[_tokenId][bidder]
-				});
-			}
-			return bids;
+        BidEntry[] memory bids = new BidEntry[](tokenBids[_tokenId].length());
+        for (uint256 i = 0; i < tokenBids[_tokenId].length(); i++) {
+            address bidder = tokenBids[_tokenId].at(i);
+            bids[i] = BidEntry({
+                bidder: bidder,
+                price: userBidPrice[_tokenId][bidder]
+            });
+        }
+        return bids;
     }
 
-    function setFeeAddress(address _feeAddr) public onlyOwner{
-			emit UpdatedFeeAddress(feeAddr, _feeAddr);
-			feeAddr = _feeAddr;
+    function setFeeAddress(address _feeAddr) public onlyOwner {
+        emit UpdatedFeeAddress(feeAddr, _feeAddr);
+        feeAddr = _feeAddr;
     }
 
     function setFeePercent(uint256 _feePercent) public onlyOwner {

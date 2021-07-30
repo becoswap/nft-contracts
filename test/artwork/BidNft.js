@@ -6,7 +6,7 @@ const { expectRevert } = require('@openzeppelin/test-helpers');
 const dead = "0x000000000000000000000000000000000000dead";
 
 contract("BidNFT", accounts => {
-  it("sell", async () => {
+  it("sell token", async () => {
     const erc20 = await TestErc20.deployed();
     await erc20.mint(101, {from: accounts[1]});
     await erc20.mint(100, {from: accounts[2]});
@@ -28,9 +28,11 @@ contract("BidNFT", accounts => {
     await  bidNft.readyToSellToken(1, 100);
 
 
-    await expectRevert(bidNft.buyToken(2, {from: accounts[1]}), "Token not in sell book")    
-    await expectRevert(bidNft.buyToken(1, {from: accounts[5]}), "transfer amount exceeds balance")    
-    await bidNft.buyToken(1, {from: accounts[1]})
+    await expectRevert(bidNft.buyToken(2, 100, {from: accounts[1]}), "Token not in sell book")    
+    await expectRevert(bidNft.buyToken(1, 100, {from: accounts[5]}), "transfer amount exceeds balance")    
+    await expectRevert(bidNft.buyToken(1, 99, {from: accounts[1]}), "invalid price")
+
+    await bidNft.buyToken(1, 100, {from: accounts[1]})
 
     let bal = await erc20.balanceOf(accounts[0]);
     assert.equal(bal.toString(), 95)
@@ -60,9 +62,11 @@ contract("BidNFT", accounts => {
     bal = await erc20.balanceOf(accounts[2]);
     assert.equal(bal.toString(), 0)
 
-    await expectRevert(bidNft.sellTokenTo(1, accounts[2], {from: accounts[0]}), "Only Seller can sell token")
-    await expectRevert(bidNft.sellTokenTo(1, accounts[5], {from: accounts[1]}), "bidder not found")
-    await bidNft.sellTokenTo(1, accounts[2], {from: accounts[1]});
+    await expectRevert(bidNft.sellTokenTo(1, accounts[2], 100, {from: accounts[0]}), "Only Seller can sell token")
+    await expectRevert(bidNft.sellTokenTo(1, accounts[5], 100, {from: accounts[1]}), "bidder not found")
+    await expectRevert(bidNft.sellTokenTo(1, accounts[2], 99, {from: accounts[1]}), "invalid price")
+    await bidNft.sellTokenTo(1, accounts[2], 100, {from: accounts[1]});
+
     bal = await erc20.balanceOf(accounts[1]);
     assert.equal(bal.toString(), 86)
 
