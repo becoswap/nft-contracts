@@ -1,4 +1,4 @@
-const BidNFT = artifacts.require("./artwork/BidNFT.sol");
+const BidArtworkNFT = artifacts.require("./artwork/BidArtworkNFT.sol");
 const ArtworkNFT = artifacts.require("./artwork/ArtworkNFT.sol");
 const TestErc20 = artifacts.require("./test/TestErc20.sol");
 const { expectRevert } = require('@openzeppelin/test-helpers');
@@ -9,7 +9,7 @@ contract("BidNFT", accounts => {
   beforeEach(async () => {
     this.erc20 = await TestErc20.new()
     this.nft = await ArtworkNFT.new("Demo", "DEMO", "0x000000000000000000000000000000000000dead", 5);
-    this.bid = await BidNFT.new(this.nft.address, this.erc20.address, "0x000000000000000000000000000000000000dead", 5)
+    this.bid = await BidArtworkNFT.new(this.nft.address, this.erc20.address, "0x000000000000000000000000000000000000dead", 5)
 
     await this.erc20.mint(101, {from: accounts[1]});
     await this.erc20.mint(100, {from: accounts[2]});

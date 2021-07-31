@@ -13,7 +13,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "../interfaces/IArtworkNFT.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
-contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
+contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using Address for address;
