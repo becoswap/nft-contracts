@@ -19,8 +19,6 @@ contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     using Address for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
-    uint256 MAX_BID = 100;
-
     struct BidEntry {
         address bidder;
         uint256 price;
@@ -55,6 +53,11 @@ contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     );
     event Bid(address indexed bidder, uint256 indexed tokenId, uint256 price);
     event CancelBidToken(address indexed bidder, uint256 indexed tokenId);
+
+    modifier onlySeller(uint256 _tokenId) {
+        require(sellers[_tokenId] == _msgSender(), "caller is not the seller");
+        _;
+    }
 
     constructor(
         address _nftAddress,
@@ -128,11 +131,8 @@ contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         public
         override
         whenNotPaused
+        onlySeller(_tokenId)
     {
-        require(
-            sellers[_tokenId] == _msgSender(),
-            "Only Seller can update price"
-        );
         prices[_tokenId] = _price;
         emit Ask(_msgSender(), _tokenId, _price);
     }
@@ -163,16 +163,15 @@ contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         emit Ask(_to, _tokenId, _price);
     }
 
-    function cancelSellToken(uint256 _tokenId) public override whenNotPaused {
-        require(
-            sellers[_tokenId] == _msgSender(),
-            "Only Seller can cancel sell token"
-        );
+    function cancelSellToken(uint256 _tokenId)
+        public
+        override
+        whenNotPaused
+        onlySeller(_tokenId)
+    {
         nft.safeTransferFrom(address(this), _msgSender(), _tokenId);
-
         delete prices[_tokenId];
         delete sellers[_tokenId];
-
         emit CancelSellToken(_msgSender(), _tokenId);
     }
 
@@ -211,11 +210,7 @@ contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         uint256 _tokenId,
         address _to,
         uint256 _price
-    ) public override whenNotPaused {
-        require(
-            sellers[_tokenId] == _msgSender(),
-            "Only Seller can sell token"
-        );
+    ) public override whenNotPaused onlySeller(_tokenId) {
         uint256 price = getUserBidPriceAndRemove(_tokenId, _to);
         require(price == _price, "invalid price");
         nft.safeTransferFrom(address(this), _to, _tokenId);

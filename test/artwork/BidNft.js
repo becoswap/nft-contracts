@@ -25,12 +25,12 @@ contract("BidNFT", accounts => {
     await expectRevert(this.bid.readyToSellToken(1, 0), "Price must be granter than zero")
     await  this.bid.readyToSellToken(1, 100);
 
-    await expectRevert(this.bid.cancelSellToken(1, {from: accounts[1]}), "Only Seller can cancel sell token")
+    await expectRevert(this.bid.cancelSellToken(1, {from: accounts[1]}), "caller is not the seller")
     await this.bid.cancelSellToken(1, {from: accounts[0]});
     await this.nft.approve(this.bid.address, 1);
     await  this.bid.readyToSellToken(1, 100);
 
-    await expectRevert(this.bid.setCurrentPrice(1, 99, {from: accounts[1]}), "Only Seller can update price");
+    await expectRevert(this.bid.setCurrentPrice(1, 99, {from: accounts[1]}), "caller is not the seller");
     await this.bid.setCurrentPrice(1, 99, {from: accounts[0]})
     let currentPrice = await this.bid.prices(1);
     assert.equal(currentPrice.toString(), "99");
@@ -73,7 +73,7 @@ contract("BidNFT", accounts => {
     bal = await this.erc20.balanceOf(accounts[2]);
     assert.equal(bal.toString(), 0)
 
-    await expectRevert(this.bid.sellTokenTo(1, accounts[2], 100, {from: accounts[0]}), "Only Seller can sell token")
+    await expectRevert(this.bid.sellTokenTo(1, accounts[2], 100, {from: accounts[0]}), "caller is not the seller")
     await expectRevert(this.bid.sellTokenTo(1, accounts[5], 100, {from: accounts[1]}), "bidder not found")
     await expectRevert(this.bid.sellTokenTo(1, accounts[2], 99, {from: accounts[1]}), "invalid price")
     await this.bid.sellTokenTo(1, accounts[2], 100, {from: accounts[1]});
