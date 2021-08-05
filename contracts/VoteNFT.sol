@@ -13,6 +13,7 @@ contract VoteNFT is Ownable {
 
     IERC20 public krc20;
     address public feeAddress;
+    uint256 MIN_VOTE = 1 ether;
 
     event Voted(address voter, address nft, uint256 tokenId, uint256 votes);
 
@@ -26,6 +27,7 @@ contract VoteNFT is Ownable {
         uint256 _tokenId,
         uint256 _votes
     ) public {
+        require(_votes >= MIN_VOTE, "min vote");
         IERC721 nft = IERC721(_nft);
         uint256 half = _votes.div(2);
         krc20.safeTransferFrom(_msgSender(), nft.ownerOf(_tokenId), half);

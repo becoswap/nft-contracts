@@ -5,6 +5,7 @@ const { expectRevert } = require('@openzeppelin/test-helpers');
 
 const dead = "0x000000000000000000000000000000000000dead";
 
+const toWei = web3.utils.toWei;
 
 contract("VoteNFT", ([owner, voter]) => {
     beforeEach(async () => {
@@ -15,20 +16,21 @@ contract("VoteNFT", ([owner, voter]) => {
         await this.nft.mint(owner, "", 5, {value: 5});
 
         // mint token for voter
-        await this.erc20.mint(100, {from: voter})
-        await this.erc20.approve(this.vote.address, 80, {from: voter});
+        await this.erc20.mint(toWei("100", "ether"), {from: voter})
+        await this.erc20.approve(this.vote.address, toWei("80", "ether"), {from: voter});
     })
 
     it("vote", async () => {
-        await expectRevert(this.vote.vote(this.nft.address, 2, 100, { from: voter}), "owner query for nonexistent token")
-        await expectRevert(this.vote.vote(this.nft.address, 1, 100, { from: voter}), "transfer amount exceeds allowance")
-        await this.vote.vote(this.nft.address, 1, 80, { from: voter});
-        await expectRevert(this.vote.vote(this.nft.address, 1, 50, { from: voter}), "transfer amount exceeds balance")
+        await expectRevert(this.vote.vote(this.nft.address, 2, toWei("100", "ether"), { from: voter}), "owner query for nonexistent token")
+        await expectRevert(this.vote.vote(this.nft.address, 1, toWei("100", "ether"), { from: voter}), "transfer amount exceeds allowance")
+        await expectRevert(this.vote.vote(this.nft.address, 1, toWei("0.9", "ether"), { from: voter}), "min vote");
+        await this.vote.vote(this.nft.address, 1, toWei("80", "ether"), { from: voter})
+        await expectRevert(this.vote.vote(this.nft.address, 1, toWei("50", "ether"), { from: voter}), "transfer amount exceeds balance")
 
         let bal = await this.erc20.balanceOf(owner);
-        assert.equal(bal.toString(), 40)
+        assert.equal(bal.toString(), toWei("40", "ether"))
         bal = await this.erc20.balanceOf(dead);
-        assert.equal(bal.toString(), 40)
+        assert.equal(bal.toString(), toWei("40", "ether"))
     })
 
     it("setFeeAddress", async() => {
