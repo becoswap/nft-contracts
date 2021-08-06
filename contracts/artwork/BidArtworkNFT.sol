@@ -181,8 +181,9 @@ contract BidArtworkNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         whenNotPaused
     {
         require(_price != 0, "Price must be granter than zero");
-
-        if (userBidPrice[_tokenId][msg.sender] > 0) {
+        uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
+        if (currentPrice > 0) {
+            require(currentPrice != _price, "change price");
             updateBidPrice(_tokenId, _price);
         } else {
             quoteErc20.safeTransferFrom(_msgSender(), address(this), _price);

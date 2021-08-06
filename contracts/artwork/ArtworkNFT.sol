@@ -24,8 +24,6 @@ contract ArtworkNFT is ERC721URIStorage, Ownable {
         uint256 royalties;
     }
 
-    event UpdatedProfile(uint256 tokenId, address creator, uint256 royalties);
-
     constructor(
         string memory _name,
         string memory _symbol,
@@ -36,15 +34,6 @@ contract ArtworkNFT is ERC721URIStorage, Ownable {
         mintFeeAmount = _mintFeeAmount;
     }
 
-    function setProfile(
-        uint256 tokenId,
-        address _creator,
-        uint256 _royalties
-    ) public {
-        require(profiles[tokenId].creator == _msgSender(), "only creator");
-        _setProfile(tokenId, _creator, _royalties);
-    }
-
     function _setProfile(
         uint256 tokenId,
         address _creator,
@@ -53,7 +42,6 @@ contract ArtworkNFT is ERC721URIStorage, Ownable {
         require(_royalties <= MAX_ROYALTIES, "max royalties");
         profiles[tokenId].creator = _creator;
         profiles[tokenId].royalties = _royalties;
-        emit UpdatedProfile(tokenId, _creator, _royalties);
     }
 
     function mint(
