@@ -21,11 +21,11 @@ contract("VoteNFT", ([owner, voter]) => {
     })
 
     it("vote", async () => {
-        await expectRevert(this.vote.vote(this.nft.address, 2, toWei("100", "ether"), { from: voter}), "owner query for nonexistent token")
-        await expectRevert(this.vote.vote(this.nft.address, 1, toWei("100", "ether"), { from: voter}), "transfer amount exceeds allowance")
-        await expectRevert(this.vote.vote(this.nft.address, 1, toWei("0.9", "ether"), { from: voter}), "min vote");
-        await this.vote.vote(this.nft.address, 1, toWei("80", "ether"), { from: voter})
-        await expectRevert(this.vote.vote(this.nft.address, 1, toWei("50", "ether"), { from: voter}), "transfer amount exceeds balance")
+        await expectRevert(this.vote.vote(this.nft.address, 2, owner, toWei("5", "ether"), { from: voter}), "owner query for nonexistent token")
+        await expectRevert(this.vote.vote(this.nft.address, 1, owner, toWei("100", "ether"), { from: voter}), "transfer amount exceeds allowance")
+        await expectRevert(this.vote.vote(this.nft.address, 1, owner, toWei("0.9", "ether"), { from: voter}), "min vote");
+        await this.vote.vote(this.nft.address, 1, owner, toWei("80", "ether"), { from: voter})
+        await expectRevert(this.vote.vote(this.nft.address, 1, owner, toWei("50", "ether"), { from: voter}), "transfer amount exceeds balance")
 
         let bal = await this.erc20.balanceOf(owner);
         assert.equal(bal.toString(), toWei("40", "ether"))
