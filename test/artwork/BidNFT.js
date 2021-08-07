@@ -31,6 +31,8 @@ contract("BidNFT", accounts => {
     await  this.bid.readyToSellToken(1, 100);
 
     await expectRevert(this.bid.setCurrentPrice(1, 99, {from: accounts[1]}), "caller is not the seller");
+    await expectRevert(this.bid.setCurrentPrice(1, 0, {from: accounts[0]}), "Price must be granter than zero");
+
     await this.bid.setCurrentPrice(1, 99, {from: accounts[0]})
     let currentPrice = await this.bid.prices(1);
     assert.equal(currentPrice.toString(), "99");
