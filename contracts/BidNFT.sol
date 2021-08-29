@@ -3,7 +3,7 @@
 pragma solidity =0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "./interfaces/IBidNFT.sol";
+import "../interfaces/IBidNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -11,35 +11,9 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-interface IKRC721 {
-    function totalSupply() external view returns (uint256 total);
-
-    function balanceOf(address _owner) external view returns (uint256 balance);
-
-    function ownerOf(uint256 _tokenId) external view returns (address owner);
-
-    function approve(address _to, uint256 _tokenId) external;
-
-    function transfer(address _to, uint256 _tokenId) external;
-
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external;
-
-    // Events
-    event Transfer(address from, address to, uint256 tokenId);
-    event Approval(address owner, address approved, uint256 tokenId);
-
-    function supportsInterface(bytes4 _interfaceID)
-        external
-        view
-        returns (bool);
-}
-
-contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
+contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
     using Address for address;
@@ -50,7 +24,7 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         uint256 price;
     }
 
-    IKRC721 public nft;
+    IERC721 public nft;
     IERC20 public quoteErc20;
     address public feeAddr;
     uint256 public feePercent;
@@ -80,6 +54,11 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     event Bid(address indexed bidder, uint256 indexed tokenId, uint256 price);
     event CancelBidToken(address indexed bidder, uint256 indexed tokenId);
 
+    modifier onlySeller(uint256 _tokenId) {
+        require(sellers[_tokenId] == _msgSender(), "caller is not the seller");
+        _;
+    }
+
     constructor(
         address _nftAddress,
         address _quoteErc20Address,
@@ -91,7 +70,7 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
             _quoteErc20Address != address(0) &&
                 _quoteErc20Address != address(this)
         );
-        nft = IKRC721(_nftAddress);
+        nft = IERC721(_nftAddress);
         quoteErc20 = IERC20(_quoteErc20Address);
         feeAddr = _feeAddr;
         feePercent = _feePercent;
@@ -116,7 +95,7 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         require(price > 0, "Token not in sell book");
         require(price == _price, "invalid price");
 
-        nft.transfer(_to, _tokenId);
+        nft.safeTransferFrom(address(this), _to, _tokenId);
         uint256 feeAmount = price.mul(feePercent).div(100);
         if (feeAmount != 0) {
             quoteErc20.safeTransferFrom(_msgSender(), feeAddr, feeAmount);
@@ -132,18 +111,22 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         delete prices[_tokenId];
         delete sellers[_tokenId];
 
-        emit Trade(seller, msg.sender, _tokenId, price, feeAmount);
+        emit Trade(
+            seller,
+            msg.sender,
+            _tokenId,
+            price,
+            royaltyAmount.add(feeAmount)
+        );
     }
 
     function setCurrentPrice(uint256 _tokenId, uint256 _price)
         public
         override
         whenNotPaused
+        onlySeller(_tokenId)
     {
-        require(
-            sellers[_tokenId] == _msgSender(),
-            "Only Seller can update price"
-        );
+        require(_price != 0, "Price must be granter than zero");
         prices[_tokenId] = _price;
         emit Ask(_msgSender(), _tokenId, _price);
     }
@@ -166,7 +149,7 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
             "Only Token Owner can sell token"
         );
         require(_price != 0, "Price must be granter than zero");
-        nft.transferFrom(address(_msgSender()), address(this), _tokenId);
+        nft.safeTransferFrom(address(_msgSender()), address(this), _tokenId);
 
         prices[_tokenId] = _price;
         sellers[_tokenId] = _to;
@@ -174,16 +157,15 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         emit Ask(_to, _tokenId, _price);
     }
 
-    function cancelSellToken(uint256 _tokenId) public override whenNotPaused {
-        require(
-            sellers[_tokenId] == _msgSender(),
-            "Only Seller can cancel sell token"
-        );
-        nft.transfer(_msgSender(), _tokenId);
-
+    function cancelSellToken(uint256 _tokenId)
+        public
+        override
+        whenNotPaused
+        onlySeller(_tokenId)
+    {
+        nft.safeTransferFrom(address(this), _msgSender(), _tokenId);
         delete prices[_tokenId];
         delete sellers[_tokenId];
-
         emit CancelSellToken(_msgSender(), _tokenId);
     }
 
@@ -193,8 +175,9 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         whenNotPaused
     {
         require(_price != 0, "Price must be granter than zero");
-
-        if (userBidPrice[_tokenId][msg.sender] > 0) {
+        uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
+        if (currentPrice > 0) {
+            require(currentPrice != _price, "change price");
             updateBidPrice(_tokenId, _price);
         } else {
             quoteErc20.safeTransferFrom(_msgSender(), address(this), _price);
@@ -222,24 +205,21 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         uint256 _tokenId,
         address _to,
         uint256 _price
-    ) public override whenNotPaused {
-        require(
-            sellers[_tokenId] == _msgSender(),
-            "Only Seller can sell token"
-        );
+    ) public override whenNotPaused onlySeller(_tokenId) {
         uint256 price = getUserBidPriceAndRemove(_tokenId, _to);
         require(price == _price, "invalid price");
-        nft.transfer(_to, _tokenId);
+        nft.safeTransferFrom(address(this), _to, _tokenId);
 
         uint256 feeAmount = price.mul(feePercent).div(100);
         if (feeAmount != 0) {
             quoteErc20.safeTransfer(feeAddr, feeAmount);
         }
         quoteErc20.safeTransfer(sellers[_tokenId], price.sub(feeAmount));
-        emit Trade(sellers[_tokenId], _to, _tokenId, price, feeAmount);
-
+        address seller = sellers[_tokenId];
         delete prices[_tokenId];
         delete sellers[_tokenId];
+
+        emit Trade(seller, _to, _tokenId, price, feeAmount);
     }
 
     function getUserBidPriceAndRemove(uint256 _tokenId, address bidder)
