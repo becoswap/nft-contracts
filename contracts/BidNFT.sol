@@ -3,7 +3,7 @@
 pragma solidity =0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IBidNFT.sol";
+import "./interfaces/IBidNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -111,13 +111,7 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         delete prices[_tokenId];
         delete sellers[_tokenId];
 
-        emit Trade(
-            seller,
-            _msgSender(),
-            _tokenId,
-            price,
-            royaltyAmount.add(feeAmount)
-        );
+        emit Trade(seller, _msgSender(), _tokenId, price, feeAmount);
     }
 
     function setCurrentPrice(uint256 _tokenId, uint256 _price)
