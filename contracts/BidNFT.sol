@@ -113,7 +113,7 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 
         emit Trade(
             seller,
-            msg.sender,
+            _msgSender(),
             _tokenId,
             price,
             royaltyAmount.add(feeAmount)
@@ -175,20 +175,20 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         whenNotPaused
     {
         require(_price != 0, "Price must be granter than zero");
-        uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
+        uint256 currentPrice = userBidPrice[_tokenId][_msgSender()];
         if (currentPrice > 0) {
             require(currentPrice != _price, "change price");
             updateBidPrice(_tokenId, _price);
         } else {
             quoteErc20.safeTransferFrom(_msgSender(), address(this), _price);
-            userBidPrice[_tokenId][msg.sender] = _price;
-            tokenBids[_tokenId].add(msg.sender);
+            userBidPrice[_tokenId][_msgSender()] = _price;
+            tokenBids[_tokenId].add(_msgSender());
         }
-        emit Bid(msg.sender, _tokenId, _price);
+        emit Bid(_msgSender(), _tokenId, _price);
     }
 
     function updateBidPrice(uint256 _tokenId, uint256 _price) private {
-        uint256 currentPrice = userBidPrice[_tokenId][msg.sender];
+        uint256 currentPrice = userBidPrice[_tokenId][_msgSender()];
         if (_price > currentPrice) {
             quoteErc20.safeTransferFrom(
                 address(_msgSender()),
@@ -196,9 +196,9 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
                 _price - currentPrice
             );
         } else {
-            quoteErc20.safeTransfer(msg.sender, currentPrice - _price);
+            quoteErc20.safeTransfer(_msgSender(), currentPrice - _price);
         }
-        userBidPrice[_tokenId][msg.sender] = _price;
+        userBidPrice[_tokenId][_msgSender()] = _price;
     }
 
     function sellTokenTo(
@@ -234,12 +234,12 @@ contract BidNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     }
 
     function cancelBidToken(uint256 _tokenId) public override whenNotPaused {
-        require(userBidPrice[_tokenId][msg.sender] > 0, "Bidder not found");
-        uint256 price = userBidPrice[_tokenId][msg.sender];
-        quoteErc20.safeTransfer(msg.sender, price);
-        userBidPrice[_tokenId][msg.sender] = 0;
-        tokenBids[_tokenId].remove(msg.sender);
-        emit CancelBidToken(msg.sender, _tokenId);
+        require(userBidPrice[_tokenId][_msgSender()] > 0, "Bidder not found");
+        uint256 price = userBidPrice[_tokenId][_msgSender()];
+        quoteErc20.safeTransfer(_msgSender(), price);
+        userBidPrice[_tokenId][_msgSender()] = 0;
+        tokenBids[_tokenId].remove(_msgSender());
+        emit CancelBidToken(_msgSender(), _tokenId);
     }
 
     function getBids(uint256 _tokenId) public view returns (BidEntry[] memory) {
