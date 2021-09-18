@@ -4,5 +4,5 @@ pragma experimental ABIEncoderV2;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface IRobotCore is IERC721 {
-    function isPregnant(uint256 _robotId) public view returns (bool);
+    function isPregnant(uint256 _robotId) external view returns (bool);
 }
