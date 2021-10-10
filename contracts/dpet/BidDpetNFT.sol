@@ -3,7 +3,7 @@
 pragma solidity =0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "./interfaces/IBidNFT.sol";
+import "../interfaces/IBidNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -12,10 +12,10 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
 
-contract KRC721 {
-    function totalSupply() public view returns (uint256 total);
+interface KRC721 {
+    function totalSupply() external view returns (uint256 total);
 
-    function balanceOf(address _owner) public view returns (uint256 balance);
+    function balanceOf(address _owner) external view returns (uint256 balance);
 
     function ownerOf(uint256 _tokenId) external view returns (address owner);
 
