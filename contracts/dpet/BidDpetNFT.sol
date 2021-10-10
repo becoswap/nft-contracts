@@ -121,7 +121,7 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         require(price > 0, "Token not in sell book");
         require(price == _price, "invalid price");
 
-        nft.transferFrom(address(this), _to, _tokenId);
+        nft.transfer(_to, _tokenId);
         uint256 feeAmount = price.mul(feePercent).div(100);
         if (feeAmount != 0) {
             quoteErc20.safeTransferFrom(_msgSender(), feeAddr, feeAmount);
