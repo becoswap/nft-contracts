@@ -63,7 +63,7 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable {
         uint256 _feePercent
     ) public {
         require(_nftAddress != address(0) && _nftAddress != address(this));
-        nft = IRobotCore(_nftAddress);
+        nft = IERC721(_nftAddress);
         feeAddr = _feeAddr;
         feePercent = _feePercent;
         emit UpdatedFeeAddress(address(0), feeAddr);
@@ -118,6 +118,13 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable {
     {
         readyToSellTokenTo(_tokenId, _price, address(_msgSender()));
     }
+    
+    function batchReadyToSellToken(uint256[] calldata _tokenIds, uint256[] calldata _prices) public {
+        require(_tokenIds.length == _prices.length);
+        for (uint i = 0; i < _tokenIds.length; i++) {
+            readyToSellToken(_tokenIds[i], _prices[i]);
+        }
+    }
 
     function readyToSellTokenTo(
         uint256 _tokenId,
@@ -147,6 +154,12 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable {
         delete prices[_tokenId];
         delete sellers[_tokenId];
         emit CancelSellToken(_msgSender(), _tokenId);
+    }
+    
+    function batchCancelSellToken(uint256[] calldata _tokenIds) public {
+        for (uint i = 0; i < _tokenIds.length; i ++) {
+            cancelSellToken(_tokenIds[i]);
+        }
     }
 
     function bidToken(uint256 _tokenId) public payable whenNotPaused {
