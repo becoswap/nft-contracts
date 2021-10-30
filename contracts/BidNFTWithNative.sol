@@ -111,6 +111,13 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable {
         prices[_tokenId] = _price;
         emit Ask(_msgSender(), _tokenId, _price);
     }
+    
+    function batchSetCurrentPrice(uint256[] calldata _tokenIds, uint256[] calldata _prices) public {
+        require(_tokenIds.length == _prices.length);
+        for (uint i = 0; i < _tokenIds.length; i++) {
+            setCurrentPrice(_tokenIds[i], _prices[i]);
+        }
+    }
 
     function readyToSellToken(uint256 _tokenId, uint256 _price)
         public
