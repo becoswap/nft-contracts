@@ -151,12 +151,32 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         emit Ask(_msgSender(), _tokenId, _price);
     }
 
+    function batchSetCurrentPrice(
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _prices
+    ) public {
+        require(_tokenIds.length == _prices.length);
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            setCurrentPrice(_tokenIds[i], _prices[i]);
+        }
+    }
+
     function readyToSellToken(uint256 _tokenId, uint256 _price)
         public
         override
         whenNotPaused
     {
         readyToSellTokenTo(_tokenId, _price, address(_msgSender()));
+    }
+
+    function batchReadyToSellToken(
+        uint256[] calldata _tokenIds,
+        uint256[] calldata _prices
+    ) public {
+        require(_tokenIds.length == _prices.length);
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            readyToSellToken(_tokenIds[i], _prices[i]);
+        }
     }
 
     function readyToSellTokenTo(
@@ -187,6 +207,12 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         delete prices[_tokenId];
         delete sellers[_tokenId];
         emit CancelSellToken(_msgSender(), _tokenId);
+    }
+
+    function batchCancelSellToken(uint256[] calldata _tokenIds) public {
+        for (uint256 i = 0; i < _tokenIds.length; i++) {
+            cancelSellToken(_tokenIds[i]);
+        }
     }
 
     function bidToken(uint256 _tokenId, uint256 _price)
