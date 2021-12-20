@@ -3,7 +3,6 @@
 pragma solidity =0.8.0;
 pragma experimental ABIEncoderV2;
 
-import "../interfaces/IBidNFT.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
@@ -11,6 +10,8 @@ import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/structs/EnumerableMap.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "../libraries/TransferHelper.sol";
 
 interface KRC721 {
     function totalSupply() external view returns (uint256 total);
@@ -39,9 +40,8 @@ interface KRC721 {
         returns (bool);
 }
 
-contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
+contract BidNFTWithNativeV1 is ERC721Holder, Ownable, Pausable {
     using SafeMath for uint256;
-    using SafeERC20 for IERC20;
     using Address for address;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -51,7 +51,6 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
     }
 
     KRC721 public nft;
-    IERC20 public quoteErc20;
     address public feeAddr;
     uint256 public feePercent;
     mapping(uint256 => uint256) public prices;
@@ -87,62 +86,51 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 
     constructor(
         address _nftAddress,
-        address _quoteErc20Address,
         address _feeAddr,
         uint256 _feePercent
     ) public {
         require(_nftAddress != address(0) && _nftAddress != address(this));
-        require(
-            _quoteErc20Address != address(0) &&
-                _quoteErc20Address != address(this)
-        );
         nft = KRC721(_nftAddress);
-        quoteErc20 = IERC20(_quoteErc20Address);
         feeAddr = _feeAddr;
         feePercent = _feePercent;
         emit UpdatedFeeAddress(address(0), feeAddr);
         emit SetFeePercent(_msgSender(), 0, feePercent);
     }
 
-    function buyToken(uint256 _tokenId, uint256 _price)
-        public
-        override
-        whenNotPaused
-    {
-        buyTokenTo(_tokenId, _msgSender(), _price);
+    function buyToken(uint256 _tokenId) public payable whenNotPaused {
+        buyTokenTo(_tokenId, _msgSender());
     }
 
-    function buyTokenTo(
-        uint256 _tokenId,
-        address _to,
-        uint256 _price
-    ) public override whenNotPaused {
+    function buyTokenTo(uint256 _tokenId, address _to)
+        public
+        payable
+        whenNotPaused
+    {
         uint256 price = prices[_tokenId];
         require(price > 0, "Token not in sell book");
-        require(price == _price, "invalid price");
+        require(msg.value >= price, "invalid value");
 
         nft.transfer(_to, _tokenId);
         uint256 feeAmount = price.mul(feePercent).div(100);
         if (feeAmount != 0) {
-            quoteErc20.safeTransferFrom(_msgSender(), feeAddr, feeAmount);
+            TransferHelper.safeTransferETH(feeAddr, feeAmount);
         }
 
-        quoteErc20.safeTransferFrom(
-            _msgSender(),
-            sellers[_tokenId],
-            price.sub(feeAmount)
-        );
+        TransferHelper.safeTransferETH(sellers[_tokenId], price.sub(feeAmount));
         address seller = sellers[_tokenId];
 
         delete prices[_tokenId];
         delete sellers[_tokenId];
+
+        if (msg.value > price) {
+            TransferHelper.safeTransferETH(_msgSender(), msg.value.sub(price));
+        }
 
         emit Trade(seller, _msgSender(), _tokenId, price, feeAmount);
     }
 
     function setCurrentPrice(uint256 _tokenId, uint256 _price)
         public
-        override
         whenNotPaused
         onlySeller(_tokenId)
     {
@@ -163,7 +151,6 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 
     function readyToSellToken(uint256 _tokenId, uint256 _price)
         public
-        override
         whenNotPaused
     {
         readyToSellTokenTo(_tokenId, _price, address(_msgSender()));
@@ -183,7 +170,8 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         uint256 _tokenId,
         uint256 _price,
         address _to
-    ) public override whenNotPaused {
+    ) public whenNotPaused {
+        require(!_isContract(_msgSender()), "Contract call not allow");
         require(
             _msgSender() == nft.ownerOf(_tokenId),
             "Only Token Owner can sell token"
@@ -199,7 +187,6 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 
     function cancelSellToken(uint256 _tokenId)
         public
-        override
         whenNotPaused
         onlySeller(_tokenId)
     {
@@ -215,52 +202,28 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         }
     }
 
-    function bidToken(uint256 _tokenId, uint256 _price)
-        public
-        override
-        whenNotPaused
-    {
-        require(_price != 0, "Price must be granter than zero");
-        uint256 currentPrice = userBidPrice[_tokenId][_msgSender()];
-        if (currentPrice > 0) {
-            require(currentPrice != _price, "change price");
-            updateBidPrice(_tokenId, _price);
-        } else {
-            quoteErc20.safeTransferFrom(_msgSender(), address(this), _price);
-            userBidPrice[_tokenId][_msgSender()] = _price;
-            tokenBids[_tokenId].add(_msgSender());
-        }
-        emit Bid(_msgSender(), _tokenId, _price);
-    }
-
-    function updateBidPrice(uint256 _tokenId, uint256 _price) private {
-        uint256 currentPrice = userBidPrice[_tokenId][_msgSender()];
-        if (_price > currentPrice) {
-            quoteErc20.safeTransferFrom(
-                address(_msgSender()),
-                address(this),
-                _price - currentPrice
-            );
-        } else {
-            quoteErc20.safeTransfer(_msgSender(), currentPrice - _price);
-        }
-        userBidPrice[_tokenId][_msgSender()] = _price;
+    function bidToken(uint256 _tokenId) public payable whenNotPaused {
+        require(userBidPrice[_tokenId][_msgSender()] == 0, "Bidder found");
+        require(msg.value != 0, "Price must be granter than zero");
+        userBidPrice[_tokenId][_msgSender()] = msg.value;
+        tokenBids[_tokenId].add(_msgSender());
+        emit Bid(_msgSender(), _tokenId, msg.value);
     }
 
     function sellTokenTo(
         uint256 _tokenId,
         address _to,
         uint256 _price
-    ) public override whenNotPaused onlySeller(_tokenId) {
+    ) public whenNotPaused onlySeller(_tokenId) {
         uint256 price = getUserBidPriceAndRemove(_tokenId, _to);
         require(price == _price, "invalid price");
         nft.transfer(_to, _tokenId);
 
         uint256 feeAmount = price.mul(feePercent).div(100);
         if (feeAmount != 0) {
-            quoteErc20.safeTransfer(feeAddr, feeAmount);
+            TransferHelper.safeTransferETH(feeAddr, feeAmount);
         }
-        quoteErc20.safeTransfer(sellers[_tokenId], price.sub(feeAmount));
+        TransferHelper.safeTransferETH(sellers[_tokenId], price.sub(feeAmount));
         address seller = sellers[_tokenId];
         delete prices[_tokenId];
         delete sellers[_tokenId];
@@ -279,10 +242,10 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
         return price;
     }
 
-    function cancelBidToken(uint256 _tokenId) public override whenNotPaused {
+    function cancelBidToken(uint256 _tokenId) public whenNotPaused {
         require(userBidPrice[_tokenId][_msgSender()] > 0, "Bidder not found");
         uint256 price = userBidPrice[_tokenId][_msgSender()];
-        quoteErc20.safeTransfer(_msgSender(), price);
+        TransferHelper.safeTransferETH(_msgSender(), price);
         userBidPrice[_tokenId][_msgSender()] = 0;
         tokenBids[_tokenId].remove(_msgSender());
         emit CancelBidToken(_msgSender(), _tokenId);
@@ -317,5 +280,16 @@ contract BidDpetNFT is IBidNFT, ERC721Holder, Ownable, Pausable {
 
     function unpause() public onlyOwner whenPaused {
         _unpause();
+    }
+
+    /**
+     * @notice Check if an address is a contract
+     */
+    function _isContract(address _addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
     }
 }
