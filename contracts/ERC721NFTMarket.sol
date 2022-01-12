@@ -120,6 +120,7 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
             address(msg.sender),
             _tokenId
         );
+        delete asks[_nft][_tokenId];
         emit AskCancel(msg.sender, _nft, _tokenId);
     }
 
