@@ -12,6 +12,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWETH.sol";
+import "./interfaces/IFeeProvider.sol";
 
 contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -30,6 +31,11 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
         uint256 price;
     }
 
+    struct NftSetting {
+        IFeeProvider feeProvider;
+        bool enabled;
+    }
+
     address public WETH;
 
     // nft => tokenId => ask
@@ -37,6 +43,8 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
     // nft => tokenId => bidder=> bid
     mapping(address => mapping(uint256 => mapping(address => BidEntry)))
         public bids;
+
+    mapping(address => NftSetting) public nftSettings;
 
     event AskNew(
         address indexed _seller,
@@ -72,8 +80,22 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
         uint256 _tokenId
     );
 
+    event SetFeeProvider(address indexed _nft, address _feeProvider);
+    event EnableNFT(address indexed _nft, bool enabled);
+
     constructor(address _weth) {
         WETH = _weth;
+    }
+
+
+    function setFeeProvider(address _nftId, address _feeProvider) external onlyOwner{
+        nftSettings[_nftId].feeProvider = IFeeProvider(_feeProvider);
+        emit SetFeeProvider(_nft, _feeProvider);
+    }
+
+    function enableNft(address _nftId, bool _enabled) external onlyOwner{
+        nftSettings[_nftId].enabled = _enabled;
+        emit EnableNFT(_nft, enabled);
     }
 
     /**
@@ -286,10 +308,25 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
 
     function _distributeFees(
         address _nft,
-        uint256 _token,
+        uint256 _tokenId,
         address _quoteToken,
         uint256 _price
     ) private returns (uint256) {
-        return 0;
+        uint256 sumFees = 0;
+
+        if (nftSettings[_nft].feeProvider == address(0x0)) {
+            return sumFees;
+        }
+
+        address[] memory _addrs;
+        uint256[] memory _rates;
+        (_addrs, _rates) = nftSettings[_nft].feeProvider.getFees(_tokenId);
+        for (uint i =0; i < _addrs.length; i ++) {
+            uint fee = _price.mul(_rates[i]).div(10000);
+            IERC20(_quoteToken).safeTransfer(_addrs[i], fee);
+            sumFees = sumFees.add(fee);
+        }
+
+        return sumFees;
     }
 }
