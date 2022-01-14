@@ -164,6 +164,8 @@ contract ERC721NFTMarket is
         address _quoteToken,
         uint256 _price
     ) external {
+        require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
+
         IERC20(_quoteToken).safeTransferFrom(
             address(msg.sender),
             address(this),
@@ -212,6 +214,7 @@ contract ERC721NFTMarket is
         payable
         nonReentrant
     {
+        require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
         IWETH(WETH).deposit{value: msg.value}();
         _buy(_nft, _tokenId, WETH, msg.value);
     }

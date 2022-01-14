@@ -67,6 +67,15 @@ contract("NftMarket", ([owner, buyer, feeRecipient, loyaltyFeeRecipient]) => {
     })
 
     it ("buy", async () =>{
+        await expectRevert(this.nftMarket.buy(
+            this.nft.address,
+            1000,
+            this.erc202.address,
+            1000,
+            {from: buyer}
+        ), "token is not sell")
+
+
         await this.nftMarket.createAsk(
             this.nft.address,
             1000,
@@ -111,6 +120,12 @@ contract("NftMarket", ([owner, buyer, feeRecipient, loyaltyFeeRecipient]) => {
     })
 
     it ("buy using eth", async () =>{
+        await expectRevert(this.nftMarket.buyUsingEth(
+            this.nft.address,
+            1000,
+            {from: buyer}
+        ), "token is not sell")
+
         await this.nftMarket.createAsk(
             this.nft.address,
             1000,
