@@ -34,7 +34,7 @@ async function setChainTimestamp(ts) {
 }
 
 
-contract("ERC721NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient]) => {
+contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient]) => {
     beforeEach(async () => {
         this.nft = await TestErc721.new();
         this.usdt = await TestErc20.new()
