@@ -62,7 +62,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
                 this.nft.address,
                 1000,
                 this.usdt.address,
-                100,
+                0,
                 0,
                 1
             ), "ERC721NFTAuction: _endTime must be granter than block.timestamp"
@@ -73,7 +73,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
                 this.nft.address,
                 1000,
                 this.usdt.address,
-                100,
+                0,
                 time  + 200,
                 time  + 100
             ), "ERC721NFTAuction: _endTime must be granter than _startTime"
@@ -83,7 +83,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
             this.nft.address,
             1000,
             this.usdt.address,
-            100,
+            0,
             time + 100,
             time  + 1000
         )
@@ -94,7 +94,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
                 this.nft.address,
                 1000,
                 this.usdt.address,
-                100,
+                0,
                 time + 100,
                 time  + 1000
             ), "ERC721: transfer of token that is not own"
@@ -197,7 +197,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
             this.nft.address,
             1000,
             this.usdt.address,
-            100,
+            0,
             time + 100,
             time  + 1000
         )
@@ -220,7 +220,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
             this.nft.address,
             1000,
             this.usdt.address,
-            100,
+            0,
             0,
             time  + 1000
         )
@@ -248,7 +248,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
             this.nft.address,
             1000,
             this.weth.address,
-            100,
+            0,
             0,
             time  + 1000
         )
@@ -271,60 +271,6 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
 
     })
 
-    it("Accept", async () => {
-        const time = await getLastBlockTimestamp();
-
-        await this.nftAuction.createAuction(
-            this.nft.address,
-            1000,
-            this.usdt.address,
-            100,
-            time + 100,
-            time  + 1000
-        )
-        await mineBlockWithTS(time +200)
-        await this.nftAuction.bid(
-            this.nft.address,
-            1000,
-            this.usdt.address,
-            99,
-            { from: buyer}
-        )
-
-        await expectRevert(
-            this.nftAuction.accept(
-                this.nft.address,
-                1000,
-            ), "ERC721NFTAuction: auction not end"
-        )
-
-        await mineBlockWithTS(time +1100)
-
-        await expectRevert(
-            this.nftAuction.collect(
-                this.nft.address,
-                1000,
-                { from: buyer}
-            ), "ERC721NFTAuction: need seller accept"
-        )
-
-        await expectRevert(
-            this.nftAuction.accept(
-                this.nft.address,
-                1000,
-                { from: buyer}
-            ), "ERC721NFTAuction: only seller"
-        )
-
-        await this.nftAuction.accept(
-            this.nft.address,
-            1000,
-        )
-
-        assert.equal(await this.nft.ownerOf(1000),buyer)
-        assert.equal(await this.usdt.balanceOf(owner), 99)
-    })
-
     it("loyalty fee", async () => {
         await this.feeProvider.setRecipient(
             this.nft.address,
@@ -337,7 +283,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
             this.nft.address,
             1000,
             this.usdt.address,
-            100,
+            0,
             0,
             time  + 1000
         )

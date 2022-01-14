@@ -29,7 +29,6 @@ contract ERC721NFTAuction is
     address public immutable WETH;
 
     struct Auction {
-        uint256 askPrice; // sell price
         uint256 bidPrice; // bid price
         address seller; // address of the seller
         address bidder; // address of bidder
@@ -112,8 +111,7 @@ contract ERC721NFTAuction is
             _tokenId
         );
         auctions[_nft][_tokenId] = Auction({
-            bidPrice: 0,
-            askPrice: _price,
+            bidPrice: _price,
             bidder: address(0),
             seller: address(msg.sender),
             startTime: _startTime,
@@ -222,30 +220,6 @@ contract ERC721NFTAuction is
             auction.endTime < block.timestamp,
             "ERC721NFTAuction: auction not end"
         );
-        require(
-            auction.bidPrice >= auction.askPrice,
-            "ERC721NFTAuction: need seller accept"
-        );
-        _finalize(_nft, _tokenId);
-    }
-
-    /**
-     * @notice Aceept Sell NFT
-     * @param _nft: contract address of the NFT
-     * @param _tokenId: tokenId of the NFT
-     */
-    function accept(address _nft, uint256 _tokenId) external {
-        Auction memory auction = auctions[_nft][_tokenId];
-        require(auction.seller == msg.sender, "ERC721NFTAuction: only seller");
-        require(
-            auction.endTime < block.timestamp,
-            "ERC721NFTAuction: auction not end"
-        );
-        _finalize(_nft, _tokenId);
-    }
-
-    function _finalize(address _nft, uint256 _tokenId) private {
-        Auction memory auction = auctions[_nft][_tokenId];
         IERC721(_nft).safeTransferFrom(address(this), auction.bidder, _tokenId);
         uint256 fees = _distributeFees(
             _nft,
@@ -258,7 +232,6 @@ contract ERC721NFTAuction is
         delete auctions[_nft][_tokenId];
         emit AuctionCompleted(_nft, _tokenId, auction.bidPrice, netPrice);
     }
-
     function _isContract(address _addr) internal view returns (bool) {
         uint256 size;
         assembly {
