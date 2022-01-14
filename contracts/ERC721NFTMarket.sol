@@ -36,11 +36,6 @@ contract ERC721NFTMarket is
         uint256 price;
     }
 
-    struct NftSetting {
-        IFeeProvider feeProvider;
-        bool enabled;
-    }
-
     address public immutable WETH;
 
     // nft => tokenId => ask
@@ -49,7 +44,6 @@ contract ERC721NFTMarket is
     mapping(address => mapping(uint256 => mapping(address => BidEntry)))
         public bids;
 
-    mapping(address => NftSetting) public nftSettings;
 
     event AskNew(
         address indexed _seller,
