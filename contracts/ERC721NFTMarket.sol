@@ -94,6 +94,12 @@ contract ERC721NFTMarket is
         uint256 _tokenId
     );
 
+    modifier notContract() {
+        require(!_isContract(msg.sender), "Contract not allowed");
+        require(msg.sender == tx.origin, "Proxy contract not allowed");
+        _;
+    }
+
     constructor(
         address _weth,
         address _feeProvider,
@@ -115,7 +121,7 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external nonReentrant {
+    ) external nonReentrant notContract{
         // Verify price is not too low/high
         require(_price > 0, "Ask: Price must be granter than zero");
         IERC721(_nft).safeTransferFrom(
@@ -163,7 +169,7 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external {
+    ) external notContract{
         require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
 
         IERC20(_quoteToken).safeTransferFrom(
@@ -213,6 +219,7 @@ contract ERC721NFTMarket is
         external
         payable
         nonReentrant
+        notContract
     {
         require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
         IWETH(WETH).deposit{value: msg.value}();
@@ -267,7 +274,7 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external {
+    ) external notContract {
         IERC20(_quoteToken).safeTransferFrom(
             address(msg.sender),
             address(this),
@@ -296,6 +303,7 @@ contract ERC721NFTMarket is
     function bidUsingEth(address _nft, uint256 _tokenId)
         external
         payable
+        notContract
         nonReentrant
     {
         IWETH(WETH).deposit{value: msg.value}();
@@ -312,5 +320,13 @@ contract ERC721NFTMarket is
         IERC20(bid.quoteToken).safeTransfer(address(msg.sender), bid.price);
         delete bids[_nft][_tokenId][msg.sender];
         emit CancelBid(msg.sender, _nft, _tokenId);
+    }
+
+    function _isContract(address _addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
     }
 }

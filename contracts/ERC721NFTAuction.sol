@@ -66,6 +66,12 @@ contract ERC721NFTAuction is
 
     mapping(address => mapping(uint256 => Auction)) public auctions;
 
+    modifier notContract() {
+        require(!_isContract(msg.sender), "Contract not allowed");
+        require(msg.sender == tx.origin, "Proxy contract not allowed");
+        _;
+    }
+
     constructor(
         address _weth,
         address _feeProvider,
@@ -91,7 +97,7 @@ contract ERC721NFTAuction is
         uint256 _price,
         uint256 _startTime,
         uint256 _endTime
-    ) external {
+    ) external notContract{
         require(
             _endTime > block.timestamp,
             "ERC721NFTAuction: _endTime must be granter than block.timestamp"
@@ -160,7 +166,7 @@ contract ERC721NFTAuction is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external payable {
+    ) external payable notContract{
         Auction storage auction = auctions[_nft][_tokenId];
         require(
             auction.seller != address(0),
@@ -251,5 +257,13 @@ contract ERC721NFTAuction is
         IERC20(auction.quoteToken).safeTransfer(auction.seller, netPrice);
         delete auctions[_nft][_tokenId];
         emit AuctionCompleted(_nft, _tokenId, auction.bidPrice, netPrice);
+    }
+
+    function _isContract(address _addr) internal view returns (bool) {
+        uint256 size;
+        assembly {
+            size := extcodesize(_addr)
+        }
+        return size > 0;
     }
 }
