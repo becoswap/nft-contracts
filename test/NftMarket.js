@@ -9,7 +9,7 @@ const FeeProvider = artifacts.require("./FeeProvider.sol");
 
 
 
-contract("NftMarket", ([owner, buyer, feeRecipient, loyaltyFeeRecipient]) => {
+contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     beforeEach(async () => {
         this.nft = await TestErc721.new();
         this.erc20 = await TestErc20.new()
@@ -264,10 +264,10 @@ contract("NftMarket", ([owner, buyer, feeRecipient, loyaltyFeeRecipient]) => {
         assert.equal(await this.erc20.balanceOf(buyer), 1400);
     })
 
-    it("loyalty fee", async () => {
+    it("Royalty fee", async () => {
         await this.feeProvider.setRecipient(
             this.nft.address,
-            [loyaltyFeeRecipient],
+            [RoyaltyFeeRecipient],
             [100]
         )
 
@@ -288,6 +288,13 @@ contract("NftMarket", ([owner, buyer, feeRecipient, loyaltyFeeRecipient]) => {
 
         assert.equal(await this.erc20.balanceOf(owner), 98);
         assert.equal(await this.erc20.balanceOf(feeRecipient), 1);
-        assert.equal(await this.erc20.balanceOf(loyaltyFeeRecipient), 1);
+        assert.equal(await this.erc20.balanceOf(RoyaltyFeeRecipient), 1);
+    })
+
+    it("setProtocolFeePercent", async () => {
+        await expectRevert(
+            this.nftMarket.setProtocolFeePercent(501),
+            "max_fee"
+        );
     })
 })

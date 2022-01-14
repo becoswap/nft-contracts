@@ -34,7 +34,7 @@ async function setChainTimestamp(ts) {
 }
 
 
-contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient]) => {
+contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient]) => {
     beforeEach(async () => {
         this.nft = await TestErc721.new();
         this.usdt = await TestErc20.new()
@@ -207,7 +207,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
                 this.nft.address,
                 1000,
                 { from: buyer}
-            ), "ERC721NFTAuction: only seller can cancel"
+            ), "ERC721NFTAuction: only seller"
         )
 
         await this.nftAuction.cancelAuction(
@@ -237,7 +237,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
             this.nftAuction.cancelAuction(
                 this.nft.address,
                 1000,
-            ), "ERC721NFTAuction: can not cancel"
+            ), "ERC721NFTAuction: has bidder"
         )
 
     })
@@ -271,10 +271,10 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
 
     })
 
-    it("loyalty fee", async () => {
+    it("Royalty fee", async () => {
         await this.feeProvider.setRecipient(
             this.nft.address,
-            [loyaltyFeeRecipient],
+            [RoyaltyFeeRecipient],
             [100]
         )
 
@@ -305,7 +305,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, loyaltyFeeRecipient
         )
         
         assert.equal(await this.usdt.balanceOf(owner), 98) // seller: 98%
-        assert.equal(await this.usdt.balanceOf(loyaltyFeeRecipient), 1) //  loyalty: 1%
+        assert.equal(await this.usdt.balanceOf(RoyaltyFeeRecipient), 1) //  Royalty: 1%
         assert.equal(await this.usdt.balanceOf(feeRecipient), 1) // protocol fee: 1%
     })
 })

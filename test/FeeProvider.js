@@ -1,3 +1,4 @@
+const expectRevert = require("@openzeppelin/test-helpers/src/expectRevert");
 const { assert } = require("chai");
 
 const FeeProvider = artifacts.require("./FeeProvider.sol");
@@ -28,6 +29,14 @@ contract("FeeProvider", ([owner]) => {
             owner,
             [owner],
             [100]
+        )
+        
+        await expectRevert(
+            this.feeProvider.setRecipient(
+                owner,
+                [owner],
+                [1001]
+            ), "max_fee"
         )
 
         r = await this.feeProvider.getFees(owner, 1);

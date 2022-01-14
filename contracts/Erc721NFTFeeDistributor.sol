@@ -15,7 +15,9 @@ contract Erc721NFTFeeDistributor is Ownable {
 
     address public feeProvider;
     address public protocolFeeRecipient;
-    uint256 public protocolFeePercent = 2500;
+    uint256 public protocolFeePercent = 250;
+
+    uint256 public MAX_FEE = 500; // 10%
 
     constructor(address _feeProvider, address _recipient, uint256 _feePercent) {
         feeProvider = _feeProvider;
@@ -32,8 +34,7 @@ contract Erc721NFTFeeDistributor is Ownable {
     }
 
     function setProtocolFeePercent(uint256 _percent) external onlyOwner {
-        require(protocolFeePercent <= 10000, "invalid fee percent");
-        require(protocolFeePercent > 0, "invalid fee percent");
+        require(_percent <= MAX_FEE, "max_fee");
         protocolFeePercent = _percent;
     }
 

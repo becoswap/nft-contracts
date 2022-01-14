@@ -15,6 +15,8 @@ contract FeeProvider is Ownable {
     mapping(address => address) public providers;
     mapping(address => Recipient) private feeRecipients;
 
+    uint256 public MAX_FEE = 1000; // 5%
+
     struct Recipient {
         address[] recipients;
         uint256[] rates;
@@ -36,9 +38,9 @@ contract FeeProvider is Ownable {
         uint256 sumRates = 0;
         for (uint256 i = 0; i < recipients.length; i++) {
             sumRates += rates[i];
-            require(rates[i] < 10000, "invalid percent");
+            require(rates[i] <= MAX_FEE, "max_fee");
         }
-        require(sumRates < 10000, "invalid percent");
+        require(sumRates <= MAX_FEE, "max_fee");
         feeRecipients[_nft] = Recipient({recipients: recipients, rates: rates});
         emit SetRecipient(_nft, recipients, rates);
     }
