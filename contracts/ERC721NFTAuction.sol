@@ -137,11 +137,11 @@ contract ERC721NFTAuction is
     function cancelAuction(address _nft, uint256 _tokenId) external {
         require(
             auctions[_nft][_tokenId].seller == msg.sender,
-            "ERC721NFTAuction: only seller can cancel"
+            "ERC721NFTAuction: only seller"
         );
         require(
             auctions[_nft][_tokenId].bidder == address(0),
-            "ERC721NFTAuction: can not cancel"
+            "ERC721NFTAuction: has bidder"
         );
         IERC721(_nft).safeTransferFrom(
             address(this),
