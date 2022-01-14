@@ -62,6 +62,15 @@ contract ERC721NFTAuction is ERC721Holder, Ownable, ReentrancyGuard {
 
     mapping(address => mapping(uint => Auction)) public auctions;
 
+    /**
+     * @notice Create Auction
+     * @param _nft: contract address of the NFT
+     * @param _tokenId: tokenId of the NFT
+     * @param _quoteToken: quote token
+     * @param _price: price for auction (in wei)
+     * @param _startTime: start time for auction (timestamp)
+     * @param _endTime: end time for auction (timestamp)
+     */
     function createAuction(
         address _nft,
         uint256 _tokenId,
@@ -70,8 +79,8 @@ contract ERC721NFTAuction is ERC721Holder, Ownable, ReentrancyGuard {
         uint256 _startTime,
         uint256 _endTime
     ) external {
-        require(block.timestamp >= _startTime, "ERC721NFTAuction: invalid start time");
-        require(_endTime > _startTime, "ERC721NFTAuction: invalid end time");
+        require(block.timestamp >= _startTime, "ERC721NFTAuction: starTime");
+        require(_endTime > _startTime, "ERC721NFTAuction: endTime");
         IERC721(_nft).safeTransferFrom(address(msg.sender), address(this), _tokenId);
         auctions[_nft][_tokenId] = Auction({
             bidPrice: 0,
@@ -85,7 +94,11 @@ contract ERC721NFTAuction is ERC721Holder, Ownable, ReentrancyGuard {
         emit AuctionCreated(_nft, msg.sender, _tokenId, _startTime, _endTime, _quoteToken, _price);
     }
 
-
+    /**
+     * @notice Cancel Auction
+     * @param _nft: contract address of the NFT
+     * @param _tokenId: tokenId of the NFT
+     */
     function cancelAuction(
         address _nft,
         uint256 _tokenId
@@ -97,24 +110,32 @@ contract ERC721NFTAuction is ERC721Holder, Ownable, ReentrancyGuard {
         emit CancelAuction(_nft, _tokenId);
     }
 
+    /**
+     * @notice Bid Auction
+     * @param _nft: contract address of the NFT
+     * @param _tokenId: tokenId of the NFT
+     * @param _price: price of Bid
+     * @param _quoteToken: quote token of auction
+     */
     function bid(
         address _nft,
         uint256 _tokenId,
+        address _quoteToken,
         uint256 _price
     ) external payable {
-        Auction memory auction = auctions[_nft][_tokenId];
+        Auction storage auction = auctions[_nft][_tokenId];
         require(auction.seller != address(0), "ERC721NFTAuction: auction not found");
         require(auction.startTime <= block.timestamp, "ERC721NFTAuction: start time");
         require(auction.endTime > block.timestamp, "ERC721NFTAuction: endtime");
         require(auction.bidPrice < _price, "ERC721NFTAuction: price");
+        require(auction.quoteToken == _quoteToken, "ERC721NFTAuction: quoteToken");
 
         if (auction.quoteToken == WETH && msg.value == _price) {
-            IWETH(WETH).deposit{value: amount}();
+            IWETH(WETH).deposit{value: _price}();
         } else {
             IERC20(auction.quoteToken).safeTransferFrom(address(msg.sender), address(this), _price);
         }
 
-        // cancel old bidder
         if (auction.bidder != address(0)) {
             IERC20(auction.quoteToken).safeTransferFrom(address(this), auction.bidder, _price);
         }
@@ -124,7 +145,11 @@ contract ERC721NFTAuction is ERC721Holder, Ownable, ReentrancyGuard {
         emit Bid(_nft, auction.bidder, _tokenId, _price);
     }
 
-
+    /**
+     * @notice Collect NFT
+     * @param _nft: contract address of the NFT
+     * @param _tokenId: tokenId of the NFT
+     */
     function collect(
         address _nft,
         uint256 _tokenId
@@ -135,9 +160,14 @@ contract ERC721NFTAuction is ERC721Holder, Ownable, ReentrancyGuard {
         IERC721(_nft).safeTransferFrom(address(this), auction.bidder, _tokenId);
         IERC20(auction.quoteToken).safeTransferFrom(address(this), auction.seller, _price);
         delete auctions[_nft][_tokenId];
-        emit AuctionCompleted(_nft);
+        emit AuctionCompleted(_nft, _tokenId);
     }
 
+    /**
+     * @notice Aceept Sell NFT
+     * @param _nft: contract address of the NFT
+     * @param _tokenId: tokenId of the NFT
+     */
     function accept(
         address _nft,
         uint256 _tokenId
