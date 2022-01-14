@@ -12,9 +12,14 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWETH.sol";
-import "./interfaces/IFeeProvider.sol";
+import "./Erc721NFTFeeDistributor.sol";
 
-contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
+contract ERC721NFTMarket is
+    ERC721Holder,
+    Ownable,
+    ReentrancyGuard,
+    Erc721NFTFeeDistributor
+{
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
     using SafeMath for uint256;
@@ -67,6 +72,15 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
         uint256 _price,
         uint256 _netPrice
     );
+    event AcceptBid(
+        address indexed _seller,
+        address indexed bidder,
+        address indexed _nft,
+        uint256 _tokenId,
+        address _quoteToken,
+        uint256 _price,
+        uint256 _netPrice
+    );
     event Bid(
         address indexed bidder,
         address indexed _nft,
@@ -80,22 +94,13 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
         uint256 _tokenId
     );
 
-    event SetFeeProvider(address indexed _nft, address _feeProvider);
-    event EnableNFT(address indexed _nft, bool enabled);
-
-    constructor(address _weth) {
+    constructor(
+        address _weth,
+        address _feeProvider,
+        address _feeRecipient,
+        uint256 _feePercent
+    ) Erc721NFTFeeDistributor(_feeProvider, _feeRecipient, _feePercent) {
         WETH = _weth;
-    }
-
-
-    function setFeeProvider(address _nftId, address _feeProvider) external onlyOwner{
-        nftSettings[_nftId].feeProvider = IFeeProvider(_feeProvider);
-        emit SetFeeProvider(_nft, _feeProvider);
-    }
-
-    function enableNft(address _nftId, bool _enabled) external onlyOwner{
-        nftSettings[_nftId].enabled = _enabled;
-        emit EnableNFT(_nft, enabled);
     }
 
     /**
@@ -243,7 +248,7 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
 
         delete asks[_nft][_tokenId];
         delete bids[_nft][_tokenId][_bidder];
-        emit Trade(
+        emit AcceptBid(
             seller,
             _bidder,
             _nft,
@@ -304,29 +309,5 @@ contract ERC721NFTMarket is ERC721Holder, Ownable, ReentrancyGuard {
         IERC20(bid.quoteToken).safeTransfer(address(msg.sender), bid.price);
         delete bids[_nft][_tokenId][msg.sender];
         emit CancelBid(msg.sender, _nft, _tokenId);
-    }
-
-    function _distributeFees(
-        address _nft,
-        uint256 _tokenId,
-        address _quoteToken,
-        uint256 _price
-    ) private returns (uint256) {
-        uint256 sumFees = 0;
-
-        if (nftSettings[_nft].feeProvider == address(0x0)) {
-            return sumFees;
-        }
-
-        address[] memory _addrs;
-        uint256[] memory _rates;
-        (_addrs, _rates) = nftSettings[_nft].feeProvider.getFees(_tokenId);
-        for (uint i =0; i < _addrs.length; i ++) {
-            uint fee = _price.mul(_rates[i]).div(10000);
-            IERC20(_quoteToken).safeTransfer(_addrs[i], fee);
-            sumFees = sumFees.add(fee);
-        }
-
-        return sumFees;
     }
 }

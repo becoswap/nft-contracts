@@ -5,18 +5,20 @@ const TestErc20 = artifacts.require("./test/TestErc20.sol");
 const TestErc721 = artifacts.require("./test/TestErc721.sol");
 const TestWeth = artifacts.require("./test/TestWETH.sol"); 
 const ERC721NFTMarket = artifacts.require("./ERC721NFTMarket.sol");
+const FeeProvider = artifacts.require("./FeeProvider.sol");
 
-const dead = "0x000000000000000000000000000000000000dead";
 
-const toWei = web3.utils.toWei;
 
-contract("NftMarket", ([owner, buyer]) => {
+contract("NftMarket", ([owner, buyer, feeRecipient, loyaltyFeeRecipient]) => {
     beforeEach(async () => {
         this.nft = await TestErc721.new();
         this.erc20 = await TestErc20.new()
         this.erc202 = await TestErc20.new()
         this.weth = await TestWeth.new();
-        this.nftMarket = await ERC721NFTMarket.new(this.weth.address);
+        this.feeProvider = await FeeProvider.new();
+
+        // protocol fee: 1%
+        this.nftMarket = await ERC721NFTMarket.new(this.weth.address, this.feeProvider.address, feeRecipient, 100);
 
         await this.nft.mint(1000);
         await this.erc20.mint(2000, { from: buyer});
@@ -105,7 +107,7 @@ contract("NftMarket", ([owner, buyer]) => {
         )
 
         assert.equal(await this.nft.ownerOf(1000), buyer);
-        assert.equal(await this.erc20.balanceOf(owner), 1000);
+        assert.equal(await this.erc20.balanceOf(owner), 990);
     })
 
     it ("buy using eth", async () =>{
@@ -179,7 +181,7 @@ contract("NftMarket", ([owner, buyer]) => {
         )
 
         assert.equal(await this.nft.ownerOf(1000), buyer);
-        assert.equal(await this.erc20.balanceOf(owner), 1000);
+        assert.equal(await this.erc20.balanceOf(owner), 990);
     })
 
     it("bid using eth", async () => {
@@ -199,5 +201,78 @@ contract("NftMarket", ([owner, buyer]) => {
 
         assert.equal(await this.nft.ownerOf(1000), buyer);
         assert.equal(await this.weth.balanceOf(owner), 1);
+    })
+
+    it ("cancel bid", async () => {
+        await this.nftMarket.bid(
+            this.nft.address,
+            1000,
+            this.erc20.address,
+            1000,
+            { from: buyer}
+        );
+
+        await this.nftMarket.cancelBid(
+            this.nft.address,
+            1000,
+            { from: buyer}
+        );
+
+        await expectRevert(
+            this.nftMarket.cancelBid(
+                this.nft.address,
+                1000,
+                { from: buyer}
+            ), "Bid: bid not found"
+        )
+
+        assert.equal(await this.erc20.balanceOf(buyer), 2000);
+    })
+
+    it ("update bid", async () => {
+        await this.nftMarket.bid(
+            this.nft.address,
+            1000,
+            this.erc20.address,
+            500,
+            { from: buyer}
+        );
+
+        await this.nftMarket.bid(
+            this.nft.address,
+            1000,
+            this.erc20.address,
+            600,
+            { from: buyer}
+        );
+
+        assert.equal(await this.erc20.balanceOf(buyer), 1400);
+    })
+
+    it("loyalty fee", async () => {
+        await this.feeProvider.setRecipient(
+            this.nft.address,
+            [loyaltyFeeRecipient],
+            [100]
+        )
+
+        await this.nftMarket.bid(
+            this.nft.address,
+            1000,
+            this.erc20.address,
+            100,
+            { from: buyer}
+        );
+        await this.nftMarket.acceptBid(
+            this.nft.address,
+            1000,
+            buyer,
+            this.erc20.address,
+            100,
+        )
+
+        assert.equal(await this.erc20.balanceOf(owner), 98);
+        assert.equal(await this.erc20.balanceOf(feeRecipient), 1);
+        assert.equal(await this.erc20.balanceOf(loyaltyFeeRecipient), 1);
     })
 })
