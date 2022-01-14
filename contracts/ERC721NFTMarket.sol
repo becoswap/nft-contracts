@@ -41,7 +41,7 @@ contract ERC721NFTMarket is
         bool enabled;
     }
 
-    address public WETH;
+    address public immutable WETH;
 
     // nft => tokenId => ask
     mapping(address => mapping(uint256 => Ask)) public asks;

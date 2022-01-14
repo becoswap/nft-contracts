@@ -26,16 +26,16 @@ contract ERC721NFTAuction is
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
-    address public WETH;
+    address public immutable WETH;
 
     struct Auction {
-        uint256 askPrice;
-        uint256 bidPrice;
-        address seller;
-        address bidder;
-        uint256 startTime;
-        uint256 endTime;
-        address quoteToken;
+        uint256 askPrice; // sell price
+        uint256 bidPrice; // bid price
+        address seller; // address of the seller
+        address bidder; // address of bidder
+        uint256 startTime; // start time of the auction
+        uint256 endTime; // end time of the auction
+        address quoteToken; // quote token of the acution
     }
 
     event AuctionCreated(
