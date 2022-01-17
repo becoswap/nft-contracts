@@ -263,7 +263,7 @@ contract ERC721NFTMarket is
         );
     }
 
-    function bid(
+    function createBid(
         address _nft,
         uint256 _tokenId,
         address _quoteToken,
@@ -274,10 +274,10 @@ contract ERC721NFTMarket is
             address(this),
             _price
         );
-        _bid(_nft, _tokenId, _quoteToken, _price);
+        _createBid(_nft, _tokenId, _quoteToken, _price);
     }
 
-    function _bid(
+    function _createBid(
         address _nft,
         uint256 _tokenId,
         address _quoteToken,
@@ -295,14 +295,14 @@ contract ERC721NFTMarket is
         emit Bid(msg.sender, _nft, _tokenId, _quoteToken, _price);
     }
 
-    function bidUsingEth(address _nft, uint256 _tokenId)
+    function createBidUsingEth(address _nft, uint256 _tokenId)
         external
         payable
         notContract
         nonReentrant
     {
         IWETH(WETH).deposit{value: msg.value}();
-        _bid(_nft, _tokenId, WETH, msg.value);
+        _createBid(_nft, _tokenId, WETH, msg.value);
     }
 
     function cancelBid(address _nft, uint256 _tokenId) external nonReentrant {

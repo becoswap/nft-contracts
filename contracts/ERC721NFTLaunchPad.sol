@@ -6,17 +6,20 @@ pragma abicoder v2;
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 
 interface IStakePool {
     function getUserCredit(address user) external view returns (uint256);
 }
 
 interface ILaunchpadMinter {
-    function mint(address user, uint256 level);
+    function mint(address user, uint256 level) external;
 }
 
 contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
-    
+    using SafeERC20 for IERC20;
+
     struct Launch {
         uint256 price;
         uint256 maxSell;
@@ -66,7 +69,8 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
                 price: _price,
                 maxSell: _maxSell,
                 level: _level,
-                creditPrice: _creditPrice
+                creditPrice: _creditPrice,
+                totalSold: 0
             })
         );
         return launches.length - 1;
@@ -82,7 +86,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         ILaunchpadMinter(lauchpadMinter).mint(msg.sender, launch.level);
         boughtCount[msg.sender][_launchIndex]++;
         launch.totalSold++;
-        IERC20(dealToken).safeTransferFrom(msg.sender, treasuryAddress, launch.price);
+        IERC20(dealToken).safeTransferFrom(address(msg.sender), treasuryAddress, launch.price);
         Buy(msg.sender, _launchIndex);
     }
 

@@ -144,7 +144,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     });
 
     it("bid", async () => {
-        await this.nftMarket.bid(
+        await this.nftMarket.createBid(
             this.nft.address,
             1000,
             this.erc20.address,
@@ -152,7 +152,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             { from: buyer}
         );
         await expectRevert(
-            this.nftMarket.bid(
+            this.nftMarket.createBid(
                 this.nft.address,
                 1000,
                 this.erc20.address,
@@ -200,7 +200,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     })
 
     it("bid using eth", async () => {
-        await this.nftMarket.bidUsingEth(
+        await this.nftMarket.createBidUsingEth(
             this.nft.address,
             1000,
             { from: buyer, value: 1}
@@ -219,7 +219,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     })
 
     it ("cancel bid", async () => {
-        await this.nftMarket.bid(
+        await this.nftMarket.createBid(
             this.nft.address,
             1000,
             this.erc20.address,
@@ -245,7 +245,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     })
 
     it ("update bid", async () => {
-        await this.nftMarket.bid(
+        await this.nftMarket.createBid(
             this.nft.address,
             1000,
             this.erc20.address,
@@ -253,7 +253,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             { from: buyer}
         );
 
-        await this.nftMarket.bid(
+        await this.nftMarket.createBid(
             this.nft.address,
             1000,
             this.erc20.address,
@@ -271,7 +271,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             [100]
         )
 
-        await this.nftMarket.bid(
+        await this.nftMarket.createBid(
             this.nft.address,
             1000,
             this.erc20.address,
