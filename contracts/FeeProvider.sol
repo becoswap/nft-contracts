@@ -15,7 +15,7 @@ contract FeeProvider is Ownable {
     mapping(address => address) public providers;
     mapping(address => Recipient) private feeRecipients;
 
-    uint256 public MAX_FEE = 1000; // 5%
+    uint256 public MAX_FEE = 1000; // 10%
 
     struct Recipient {
         address[] recipients;

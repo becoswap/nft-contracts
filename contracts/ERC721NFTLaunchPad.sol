@@ -7,8 +7,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-interface ICredit {
-    function getCredit(address user) external view returns (uint256);
+interface IStakePool {
+    function getUserCredit(address user) external view returns (uint256);
 }
 
 interface ILaunchpadMinter {
@@ -16,6 +16,7 @@ interface ILaunchpadMinter {
 }
 
 contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
+    
     struct Launch {
         uint256 price;
         uint256 maxSell;
@@ -24,7 +25,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         uint256 creditPrice;
     }
 
-    address public creditAddr;
+    address public stakePool;
     address public lauchpadMinter;
     address public treasuryAddress;
     address public dealToken;
@@ -36,17 +37,24 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
     event Buy(address indexed user, uint256 _launchIndex);
 
     constructor(
-        address _creditAddr,
+        address _stakePool,
         address _lauchpadMinter,
         address _treasuryAddress,
         address _dealToken
     ) {
-        creditAddr = _creditAddr;
+        stakePool = _stakePool;
         lauchpadMinter = _lauchpadMinter;
         treasuryAddress = _treasuryAddress;
         dealToken = _dealToken;
     }
 
+    /**
+     * @notice Add Launch
+     * @param _price: price of launchpad
+     * @param _maxSell: max sell
+     * @param _level: level
+     * @param _creditPrice: credit price
+     */
     function addLaunch(
         uint256 _price,
         uint256 _maxSell,
@@ -80,7 +88,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
 
     function _checkLimit(uint256 _launchIndex) private {
         Launch memory launch = launches[_launchIndex];
-        uint256 creditAmount = ICredit(creditAdd).getCredit(msg.sender);
+        uint256 creditAmount = IStakePool(stakePool).getUserCredit(msg.sender);
         uint256 maxCanBuy = creditAmount / launch.creditPrice;
         require(
             maxCanBuy >= boughtCount[msg.sender][_launchIndex],

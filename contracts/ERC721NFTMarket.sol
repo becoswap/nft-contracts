@@ -285,6 +285,7 @@ contract ERC721NFTMarket is
     ) private {
         require(_price > 0, "Bid: Price must be granter than zero");
         if (bids[_nft][_tokenId][msg.sender].price > 0) {
+            // cancel old bid
             _cancelBid(_nft, _tokenId);
         }
         bids[_nft][_tokenId][msg.sender] = BidEntry({
