@@ -65,6 +65,9 @@ contract ERC721NFTAuction is
 
     mapping(address => mapping(uint256 => Auction)) public auctions;
 
+    // The minimum percentage difference between the last bid amount and the current bid.
+    uint8 public minBidIncrementPercentage = 5;
+
     modifier notContract() {
         require(!_isContract(msg.sender), "Contract not allowed");
         require(msg.sender == tx.origin, "Proxy contract not allowed");
@@ -96,7 +99,7 @@ contract ERC721NFTAuction is
         uint256 _price,
         uint256 _startTime,
         uint256 _endTime
-    ) external notContract{
+    ) external notContract {
         require(
             _endTime > block.timestamp,
             "ERC721NFTAuction: _endTime must be granter than block.timestamp"
@@ -164,7 +167,7 @@ contract ERC721NFTAuction is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external payable notContract{
+    ) external payable notContract {
         Auction storage auction = auctions[_nft][_tokenId];
         require(
             auction.seller != address(0),
@@ -178,10 +181,22 @@ contract ERC721NFTAuction is
             auction.endTime > block.timestamp,
             "ERC721NFTAuction: auction ended"
         );
-        require(
-            auction.bidPrice < _price,
-            "ERC721NFTAuction: price must be granter bidPrice"
-        );
+
+        if (auction.bidder != address(0)) {
+            require(
+                _price >=
+                    auction.bidPrice.add(
+                        auction.bidPrice.mul(minBidIncrementPercentage).div(100)
+                    ),
+                "ERC721NFTAuction: price must be greater than bidPrice with minBidIncrementPercentage"
+            );
+        } else {
+            require(
+                _price >= auction.bidPrice,
+                "ERC721NFTAuction: price must be greater than or equal bidPrice"
+            );
+        }
+
         require(
             auction.quoteToken == _quoteToken,
             "ERC721NFTAuction: invalid quote token"
@@ -232,6 +247,7 @@ contract ERC721NFTAuction is
         delete auctions[_nft][_tokenId];
         emit AuctionCompleted(_nft, _tokenId, auction.bidPrice, netPrice);
     }
+
     function _isContract(address _addr) internal view returns (bool) {
         uint256 size;
         assembly {

@@ -83,7 +83,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
             this.nft.address,
             1000,
             this.usdt.address,
-            0,
+            1,
             time + 100,
             time  + 1000
         )
@@ -130,7 +130,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
                 this.usdt.address,
                 0,
                 { from: buyer}
-            ), "ERC721NFTAuction: price must be granter bidPrice"
+            ), "ERC721NFTAuction: price must be greater than or equal bidPrice"
         )
 
         await expectRevert( 
@@ -149,6 +149,16 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
             this.usdt.address,
             50,
             { from: buyer1}
+        )
+
+        await expectRevert( 
+            this.nftAuction.bid(
+                this.nft.address,
+                1000,
+                this.beco.address,
+                50,
+                { from: buyer}
+            ), "price must be greater than bidPrice with minBidIncrementPercentage"
         )
 
         assert.equal(await this.usdt.balanceOf(buyer1), 0)

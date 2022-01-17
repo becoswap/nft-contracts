@@ -297,4 +297,33 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             "max_fee"
         );
     })
+
+    it("accept bid", async () => {
+        await this.nftMarket.createAsk(
+            this.nft.address,
+            1000,
+            this.erc20.address,
+            100
+        )
+
+        await this.nftMarket.createBid(
+            this.nft.address,
+            1000,
+            this.erc20.address,
+            100,
+            { from: buyer}
+        )
+
+        await this.nftMarket.acceptBid(
+            this.nft.address,
+            1000,
+            buyer,
+            this.erc20.address,
+            100,
+        )
+        assert.equal(await this.erc20.balanceOf(owner), 99);
+        assert.equal(await this.erc20.balanceOf(feeRecipient), 1);
+        assert.equal(await this.erc20.balanceOf(buyer), 1900);
+        assert.equal(await this.nft.ownerOf(1000),  buyer);
+    })
 })
