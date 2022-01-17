@@ -314,6 +314,15 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             { from: buyer}
         )
 
+        await expectRevert(this.nftMarket.acceptBid(
+            this.nft.address,
+            1000,
+            buyer,
+            this.erc20.address,
+            100,
+            {from: buyer}
+        ), "ERC721: transfer of token that is not own")
+
         await this.nftMarket.acceptBid(
             this.nft.address,
             1000,
