@@ -59,6 +59,8 @@ contract ERC721NFTAuction is
     event AuctionCompleted(
         address indexed nft,
         uint256 tokenId,
+        address seller,
+        address buyer,
         uint256 price,
         uint256 netPrice
     );
@@ -245,7 +247,14 @@ contract ERC721NFTAuction is
         uint256 netPrice = auction.bidPrice.sub(fees);
         IERC20(auction.quoteToken).safeTransfer(auction.seller, netPrice);
         delete auctions[_nft][_tokenId];
-        emit AuctionCompleted(_nft, _tokenId, auction.bidPrice, netPrice);
+        emit AuctionCompleted(
+            _nft,
+            _tokenId,
+            auction.seller,
+            auction.bidder,
+            auction.bidPrice,
+            netPrice
+        );
     }
 
     function _isContract(address _addr) internal view returns (bool) {
