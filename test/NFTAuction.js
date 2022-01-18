@@ -65,7 +65,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
                 0,
                 0,
                 1
-            ), "ERC721NFTAuction: _endTime must be granter than block.timestamp"
+            ), "ERC721NFTAuction: _endTime must be greater than block.timestamp"
         )
 
         await expectRevert(
@@ -76,7 +76,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
                 0,
                 time  + 200,
                 time  + 100
-            ), "ERC721NFTAuction: _endTime must be granter than _startTime"
+            ), "ERC721NFTAuction: _endTime must be greater than _startTime"
         )
 
         await this.nftAuction.createAuction(

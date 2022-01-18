@@ -117,7 +117,7 @@ contract ERC721NFTMarket is
         uint256 _price
     ) external nonReentrant notContract{
         // Verify price is not too low/high
-        require(_price > 0, "Ask: Price must be granter than zero");
+        require(_price > 0, "Ask: Price must be greater than zero");
         IERC721(_nft).safeTransferFrom(
             address(msg.sender),
             address(this),

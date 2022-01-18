@@ -35,7 +35,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             0
-        ), "Ask: Price must be granter than zero")
+        ), "Ask: Price must be greater than zero")
 
         await expectRevert(this.nftMarket.createAsk(
             this.nft.address,

@@ -104,11 +104,11 @@ contract ERC721NFTAuction is
     ) external notContract {
         require(
             _endTime > block.timestamp,
-            "ERC721NFTAuction: _endTime must be granter than block.timestamp"
+            "ERC721NFTAuction: _endTime must be greater than block.timestamp"
         );
         require(
             _endTime > _startTime,
-            "ERC721NFTAuction: _endTime must be granter than _startTime"
+            "ERC721NFTAuction: _endTime must be greater than _startTime"
         );
         IERC721(_nft).safeTransferFrom(
             address(msg.sender),

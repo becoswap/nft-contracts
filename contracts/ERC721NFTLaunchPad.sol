@@ -29,7 +29,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
     }
 
     address public stakePool;
-    address public lauchpadMinter;
+    address public minter;
     address public treasuryAddress;
     address public dealToken;
 
@@ -41,12 +41,12 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
 
     constructor(
         address _stakePool,
-        address _lauchpadMinter,
+        address _minter,
         address _treasuryAddress,
         address _dealToken
     ) {
         stakePool = _stakePool;
-        lauchpadMinter = _lauchpadMinter;
+        minter = _minter;
         treasuryAddress = _treasuryAddress;
         dealToken = _dealToken;
     }
@@ -63,7 +63,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         uint256 _maxSell,
         uint256 _level,
         uint256 _creditPrice
-    ) external onlyOwner nonReentrant returns (uint256) {
+    ) external onlyOwner{
         launches.push(
             Launch({
                 price: _price,
@@ -73,7 +73,6 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
                 totalSold: 0
             })
         );
-        return launches.length - 1;
     }
 
     /**
@@ -81,9 +80,10 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
      * @param _launchIndex: launchpad index
      */
     function buy(uint256 _launchIndex) external nonReentrant {
+        require(launches.length > _launchIndex, "ERC721NFTLaunchPad: Launch not found");
         _checkLimit(_launchIndex);
         Launch storage launch = launches[_launchIndex];
-        ILaunchpadMinter(lauchpadMinter).mint(msg.sender, launch.level);
+        ILaunchpadMinter(minter).mint(msg.sender, launch.level);
         boughtCount[msg.sender][_launchIndex]++;
         launch.totalSold++;
         IERC20(dealToken).safeTransferFrom(address(msg.sender), treasuryAddress, launch.price);
@@ -96,8 +96,8 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         uint256 maxCanBuy = creditAmount / launch.creditPrice;
         require(
             maxCanBuy >= boughtCount[msg.sender][_launchIndex],
-            "max can buy"
+            "ERC721NFTLaunchPad: max can buy"
         );
-        require(launch.totalSold < launch.maxSell, "sold out");
+        require(launch.totalSold < launch.maxSell, "ERC721NFTLaunchPad: sold out");
     }
 }
