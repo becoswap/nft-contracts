@@ -139,7 +139,7 @@ contract ERC721NFTAuction is
      * @param _nft: contract address of the NFT
      * @param _tokenId: tokenId of the NFT
      */
-    function cancelAuction(address _nft, uint256 _tokenId) external {
+    function cancelAuction(address _nft, uint256 _tokenId) external nonReentrant{
         require(
             auctions[_nft][_tokenId].seller == msg.sender,
             "ERC721NFTAuction: only seller"
