@@ -187,14 +187,13 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
         ), "AcceptBid: invalid quoteToken");
 
-        await this.nftMarket.acceptBid(
+        const tx = await this.nftMarket.acceptBid(
             this.nft.address,
             1000,
             buyer,
             this.erc20.address,
             1000,
         )
-
         assert.equal(await this.nft.ownerOf(1000), buyer);
         assert.equal(await this.erc20.balanceOf(owner), 990);
     })
@@ -213,7 +212,6 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             this.weth.address,
             1,
         )
-
         assert.equal(await this.nft.ownerOf(1000), buyer);
         assert.equal(await this.weth.balanceOf(owner), 1);
     })

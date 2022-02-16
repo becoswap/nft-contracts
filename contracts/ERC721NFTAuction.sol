@@ -101,7 +101,7 @@ contract ERC721NFTAuction is
         uint256 _price,
         uint256 _startTime,
         uint256 _endTime
-    ) external notContract {
+    ) external notContract  nonReentrant{
         require(
             _endTime > block.timestamp,
             "ERC721NFTAuction: _endTime must be greater than block.timestamp"
@@ -169,7 +169,7 @@ contract ERC721NFTAuction is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external payable notContract {
+    ) external payable notContract nonReentrant{
         Auction storage auction = auctions[_nft][_tokenId];
         require(
             auction.seller != address(0),
@@ -231,7 +231,7 @@ contract ERC721NFTAuction is
      * @param _nft: contract address of the NFT
      * @param _tokenId: tokenId of the NFT
      */
-    function collect(address _nft, uint256 _tokenId) external {
+    function collect(address _nft, uint256 _tokenId) external nonReentrant{
         Auction memory auction = auctions[_nft][_tokenId];
         require(
             auction.endTime < block.timestamp,

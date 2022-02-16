@@ -163,7 +163,7 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external notContract{
+    ) external notContract nonReentrant{
         require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
 
         IERC20(_quoteToken).safeTransferFrom(
@@ -234,7 +234,7 @@ contract ERC721NFTMarket is
         address _bidder,
         address _quoteToken,
         uint256 _price
-    ) external {
+    ) external nonReentrant{
         BidEntry memory bid = bids[_nft][_tokenId][_bidder];
         require(bid.price == _price, "AcceptBid: invalid price");
         require(bid.quoteToken == _quoteToken, "AcceptBid: invalid quoteToken");
@@ -268,7 +268,7 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external notContract {
+    ) external notContract nonReentrant{
         IERC20(_quoteToken).safeTransferFrom(
             address(msg.sender),
             address(this),
