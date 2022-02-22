@@ -18,6 +18,8 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
 
     mapping(uint256 => Group[]) private _bundles;
 
+    event CreatedBundle(uint256 tokenId,  Group[] groups);
+
     constructor() public ERC721("BecoNFTBundle", "BNU"){}
 
     function createBundle(Group[] memory _groups) external returns (uint256) {
@@ -36,6 +38,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
             }));
         }
         _mint(address(msg.sender), _tokenIds.current());
+        emit CreatedBundle(_tokenIds.current(), _bundles[_tokenIds.current()]);
         return _tokenIds.current();
     }
 
