@@ -3,11 +3,13 @@ const { assert } = require("chai");
 const TestErc20 = artifacts.require("./test/TestErc20.sol");
 const ERC721NFTRent = artifacts.require("./ERC721NFTRent.sol");
 const TestErc721 = artifacts.require("./test/TestErc721.sol");
+const FeeProvider = artifacts.require("./FeeProvider.sol");
 
 
-contract("ERC721NFTBundle", ([owner, renter]) => {
+contract("ERC721NFTBundle", ([owner, renter, feeAddr]) => {
     beforeEach(async () => {
-        this.rent = await ERC721NFTRent.new();
+        this.feeProvider = await FeeProvider.new();
+        this.rent = await ERC721NFTRent.new(this.feeProvider.address, feeAddr, 250);
         this.nft = await TestErc721.new();
         this.usdt = await TestErc20.new();
 
@@ -64,7 +66,7 @@ contract("ERC721NFTBundle", ([owner, renter]) => {
             {from: renter}
         )
 
-        assert.equal(await this.usdt.balanceOf(owner), 100);
+        assert.equal(await this.usdt.balanceOf(owner), 98);
         assert.equal(await this.usdt.balanceOf(renter), 0);
 
         const lend = await this.rent.lendings(this.nft.address, 1);

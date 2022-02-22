@@ -7,8 +7,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+import "./Erc721NFTFeeDistributor.sol";
 
-contract ERC721NFTRent is ERC721Holder {
+
+contract ERC721NFTRent is ERC721Holder, Ownable, Erc721NFTFeeDistributor{
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -39,8 +42,17 @@ contract ERC721NFTRent is ERC721Holder {
         address nft,
         uint256 tokenId,
         address renter,
-        uint256 expiredAt
+        uint256 expiredAt,
+        uint256 price,
+        uint256 netPrice
     );
+
+    constructor(
+        address _feeProvider,
+        address _feeRecipient,
+        uint256 _feePercent
+    ) Erc721NFTFeeDistributor(_feeProvider, _feeRecipient, _feePercent) {
+    }
 
     /**
      * @notice Lend NFT
@@ -86,9 +98,13 @@ contract ERC721NFTRent is ERC721Holder {
         uint256 rentDay = _duration.div(86400);
         uint256 expiredAt = block.timestamp.add(rentDay * 86400);
         uint256 price = _pricePerDay.mul(rentDay);
-        IERC20(_quoteToken).safeTransferFrom(address(msg.sender), lendings[_nft][_tokenId].lender, price);
+
+        IERC20(_quoteToken).safeTransferFrom(address(msg.sender), address(this), price);
+        uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, price);
+        uint256 netPrice = price.sub(fees);
+        IERC20(_quoteToken).safeTransfer(lendings[_nft][_tokenId].lender, netPrice);
         lendings[_nft][_tokenId].expiredAt = expiredAt;
         lendings[_nft][_tokenId].renter = address(msg.sender);
-        emit Rent(_nft, _tokenId, address(msg.sender), expiredAt);
+        emit Rent(_nft, _tokenId, address(msg.sender), expiredAt, price, netPrice);
     }
 }
