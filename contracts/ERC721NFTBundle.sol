@@ -16,7 +16,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
         uint256[] tokenIds;
     }
 
-    mapping(uint256 => Group[]) public bundles;
+    mapping(uint256 => Group[]) private _bundles;
 
     constructor() public ERC721("BecoNFTBundle", "BNU"){}
 
@@ -30,7 +30,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
                     _groups[i].tokenIds[j]
                 );
             }
-            bundles[_tokenIds.current()].push(Group({
+            _bundles[_tokenIds.current()].push(Group({
                 nft: _groups[i].nft,
                 tokenIds: _groups[i].tokenIds
             }));
@@ -44,21 +44,21 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
             _isApprovedOrOwner(_msgSender(), bundleId),
             "ERC721Burnable: caller is not owner nor approved"
         );
-        for (uint256 i = 0; i < bundles[bundleId].length; i++) {
-            for (uint256 j = 0; j < bundles[bundleId][i].tokenIds.length; j++) {
-                IERC721(bundles[bundleId][i].nft).safeTransferFrom(
+        for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
+            for (uint256 j = 0; j < _bundles[bundleId][i].tokenIds.length; j++) {
+                IERC721(_bundles[bundleId][i].nft).safeTransferFrom(
                     address(this),
                     address(msg.sender),
-                    bundles[bundleId][i].tokenIds[j]
+                    _bundles[bundleId][i].tokenIds[j]
                 );
             }
         }
-        delete bundles[bundleId];
+        delete _bundles[bundleId];
         _burn(bundleId);
     }
 
 
     function getBundle(uint256 bundleId) external view returns (Group[] memory) {
-        return bundles[bundleId];
+        return _bundles[bundleId];
     }
 }
