@@ -142,7 +142,7 @@ contract("ERC721NFTBundle", ([owner, renter, feeAddr]) => {
 
         const time = await getLastBlockTimestamp()
 
-        await mineBlockWithTS(time * 60 * 60 * 25);
+        await mineBlockWithTS( time  +  60 * 60 * 48);
 
         await this.rent.cancelLend(
             this.nft.address,
