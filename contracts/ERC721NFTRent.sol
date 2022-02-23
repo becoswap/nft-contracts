@@ -297,6 +297,10 @@ contract ERC721NFTRent is
             offers[_nft][_tokenId][renter].pricePerDay == _pricePerDay,
             "ERC721NFTRent: incorect pricePerDay"
         );
+         require(
+            offers[_nft][_tokenId][renter].duration == _duration,
+            "ERC721NFTRent: incorect duration"
+        );
         require(
             lendings[_nft][_tokenId].expiredAt <= block.timestamp,
             "ERC721NFTRent: not expired"

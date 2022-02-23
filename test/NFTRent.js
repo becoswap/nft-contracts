@@ -184,6 +184,15 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 47,
             this.usdt.address,
             10,
+        ), "ERC721NFTRent: incorect duration")
+
+        await expectRevert(this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 24,
+            this.usdt.address,
+            10,
         ), "ERC721NFTRent: not expired")
 
     })
