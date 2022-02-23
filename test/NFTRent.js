@@ -6,7 +6,7 @@ const TestErc721 = artifacts.require("./test/TestErc721.sol");
 const FeeProvider = artifacts.require("./FeeProvider.sol");
 
 
-contract("ERC721NFTBundle", ([owner, renter, feeAddr]) => {
+contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
     beforeEach(async () => {
         this.feeProvider = await FeeProvider.new();
         this.rent = await ERC721NFTRent.new(this.feeProvider.address, feeAddr, 250);
@@ -150,7 +150,155 @@ contract("ERC721NFTBundle", ([owner, renter, feeAddr]) => {
         )
         assert.equal(await this.nft.ownerOf(1), owner);
     } )
+
+    it("Offer with lend", async () => {
+        await this.rent.lend(
+            this.nft.address,
+            1,
+            this.usdt.address,
+            20
+        );
+
+        await this.rent.rent(
+            this.nft.address,
+            1,
+            60 * 60 * 24,
+            this.usdt.address,
+            20,
+            {from: renter}
+        )
+
+        await this.rent.offer(
+            this.nft.address,
+            1,
+            60 * 60 * 24,
+            this.usdt.address,
+            10,
+            {from: renter}
+        )
+
+        await expectRevert(this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 47,
+            this.usdt.address,
+            10,
+        ), "ERC721NFTRent: not expired")
+
+    })
+
+    it("Accept Offer", async () => {
+        await this.rent.lend(
+            this.nft.address,
+            1,
+            this.usdt.address,
+            20
+        );
+
+        await this.rent.offer(
+            this.nft.address,
+            1,
+            60 * 60 * 24,
+            this.usdt.address,
+            10,
+            {from: renter}
+        )
+
+        await this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 24,
+            this.usdt.address,
+            10,
+        )
+    })
+
+    it("Offer", async () => {
+        await expectRevert(
+            this.rent.offer(
+                this.nft.address,
+                1,
+                60,
+                this.usdt.address,
+                100,
+                {from: renter}
+            ),
+            "ERC721NFTRent: duration must be greater than 1 day"
+        )
+
+        await this.rent.offer(
+            this.nft.address,
+            1,
+            60 * 60 * 24,
+            this.usdt.address,
+            100,
+            {from: renter}
+        )
+
+        await expectRevert(this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 24,
+            this.usdt.address,
+            1,
+        ), "ERC721NFTRent: incorect pricePerDay")
+
+        await expectRevert(this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 24,
+            renter,
+            100,
+        ), "ERC721NFTRent: incorect quoteToken")
+
+        await expectRevert(this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            this.usdt.address,
+            60 * 60 * 24,
+            this.usdt.address,
+            100,
+        ), "ERC721NFTRent: offer not found")
+
+        await this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 24,
+            this.usdt.address,
+            100,
+        )
+    })
     
+    it("CancelOffer", async () => {
+        await this.rent.offer(
+            this.nft.address,
+            1,
+            60 * 60 * 24,
+            this.usdt.address,
+            100,
+            {from: renter}
+        )
+
+        await this.rent.cancelOffer(
+            this.nft.address,
+            1,
+            {from: renter}
+        )
+        
+        await expectRevert(
+            this.rent.cancelOffer(
+                this.nft.address,
+                1,
+                {from: renter}
+            ),
+            "ERC721NFTRent: offer not found"
+        )
+    })
 })
 
 
