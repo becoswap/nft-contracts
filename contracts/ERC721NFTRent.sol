@@ -302,7 +302,7 @@ contract ERC721NFTRent is
             "ERC721NFTRent: not expired"
         );
         address lender = lendings[_nft][_tokenId].lender;
-        if (lender ==  address(msg.sender)) {
+        if (lender !=  address(msg.sender)) {
             IERC721(_nft).safeTransferFrom(
                 address(msg.sender),
                 address(this),
