@@ -281,6 +281,15 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             this.usdt.address,
             100,
         )
+
+        await expectRevert(this.rent.acceptOffer(
+            this.nft.address,
+            1,
+            renter,
+            60 * 60 * 24,
+            this.usdt.address,
+            100,
+        ), "ERC721NFTRent: offer not found")
     })
     
     it("CancelOffer", async () => {
@@ -293,12 +302,16 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             {from: renter}
         )
 
+        assert.equal(await this.usdt.balanceOf(renter), 0);
+
         await this.rent.cancelOffer(
             this.nft.address,
             1,
             {from: renter}
         )
         
+        assert.equal(await this.usdt.balanceOf(renter), 100);
+
         await expectRevert(
             this.rent.cancelOffer(
                 this.nft.address,
