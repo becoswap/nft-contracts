@@ -101,7 +101,7 @@ contract ERC721NFTAuction is
         uint256 _price,
         uint256 _startTime,
         uint256 _endTime
-    ) external notContract  nonReentrant{
+    ) external notContract nonReentrant {
         require(
             _endTime > block.timestamp,
             "ERC721NFTAuction: _endTime must be greater than block.timestamp"
@@ -110,11 +110,7 @@ contract ERC721NFTAuction is
             _endTime > _startTime,
             "ERC721NFTAuction: _endTime must be greater than _startTime"
         );
-        IERC721(_nft).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(_msgSender(), address(this), _tokenId);
         auctions[_nft][_tokenId] = Auction({
             bidPrice: _price,
             bidder: address(0),
@@ -139,7 +135,10 @@ contract ERC721NFTAuction is
      * @param _nft: contract address of the NFT
      * @param _tokenId: tokenId of the NFT
      */
-    function cancelAuction(address _nft, uint256 _tokenId) external nonReentrant{
+    function cancelAuction(address _nft, uint256 _tokenId)
+        external
+        nonReentrant
+    {
         require(
             auctions[_nft][_tokenId].seller == _msgSender(),
             "ERC721NFTAuction: only seller"
@@ -148,11 +147,7 @@ contract ERC721NFTAuction is
             auctions[_nft][_tokenId].bidder == address(0),
             "ERC721NFTAuction: has bidder"
         );
-        IERC721(_nft).safeTransferFrom(
-            address(this),
-            _msgSender(),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
         delete auctions[_nft][_tokenId];
         emit CancelAuction(_nft, _tokenId);
     }
@@ -169,7 +164,7 @@ contract ERC721NFTAuction is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external payable notContract nonReentrant{
+    ) external payable notContract nonReentrant {
         Auction storage auction = auctions[_nft][_tokenId];
         require(
             auction.seller != address(0),
@@ -231,7 +226,7 @@ contract ERC721NFTAuction is
      * @param _nft: contract address of the NFT
      * @param _tokenId: tokenId of the NFT
      */
-    function collect(address _nft, uint256 _tokenId) external nonReentrant{
+    function collect(address _nft, uint256 _tokenId) external nonReentrant {
         Auction memory auction = auctions[_nft][_tokenId];
         require(
             auction.endTime < block.timestamp,

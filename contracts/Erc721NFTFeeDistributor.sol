@@ -31,12 +31,18 @@ contract Erc721NFTFeeDistributor is Ownable {
     }
 
     function setFeeProvider(address _feeProvider) external onlyOwner {
-        require(_feeProvider != address(0), "Erc721NFTFeeDistributor: zero address");
+        require(
+            _feeProvider != address(0),
+            "Erc721NFTFeeDistributor: zero address"
+        );
         feeProvider = _feeProvider;
     }
 
     function setProtocolFeeRecipient(address _recipient) external onlyOwner {
-        require(_recipient != address(0), "Erc721NFTFeeDistributor: zero address");
+        require(
+            _recipient != address(0),
+            "Erc721NFTFeeDistributor: zero address"
+        );
         protocolFeeRecipient = _recipient;
     }
 

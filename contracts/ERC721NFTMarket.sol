@@ -44,7 +44,6 @@ contract ERC721NFTMarket is
     mapping(address => mapping(uint256 => mapping(address => BidEntry)))
         public bids;
 
-
     event AskNew(
         address indexed _seller,
         address indexed _nft,
@@ -115,14 +114,10 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external nonReentrant notContract{
+    ) external nonReentrant notContract {
         // Verify price is not too low/high
         require(_price > 0, "Ask: Price must be greater than zero");
-        IERC721(_nft).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(_msgSender(), address(this), _tokenId);
         asks[_nft][_tokenId] = Ask({
             seller: _msgSender(),
             quoteToken: _quoteToken,
@@ -142,11 +137,7 @@ contract ERC721NFTMarket is
             asks[_nft][_tokenId].seller == _msgSender(),
             "Ask: only seller"
         );
-        IERC721(_nft).safeTransferFrom(
-            address(this),
-            _msgSender(),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
         delete asks[_nft][_tokenId];
         emit AskCancel(_msgSender(), _nft, _tokenId);
     }
@@ -163,8 +154,8 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external notContract nonReentrant{
-        require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
+    ) external notContract nonReentrant {
+        require(asks[_nft][_tokenId].seller != address(0), "token is not sell");
 
         IERC20(_quoteToken).safeTransferFrom(
             _msgSender(),
@@ -188,11 +179,7 @@ contract ERC721NFTMarket is
         uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, _price);
         uint256 netPrice = _price.sub(fees);
         IERC20(_quoteToken).safeTransfer(ask.seller, netPrice);
-        IERC721(_nft).safeTransferFrom(
-            address(this),
-            _msgSender(),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
         delete asks[_nft][_tokenId];
         emit Trade(
             ask.seller,
@@ -216,7 +203,7 @@ contract ERC721NFTMarket is
         nonReentrant
         notContract
     {
-        require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
+        require(asks[_nft][_tokenId].seller != address(0), "token is not sell");
         IWETH(WETH).deposit{value: msg.value}();
         _buy(_nft, _tokenId, WETH, msg.value);
     }
@@ -235,7 +222,7 @@ contract ERC721NFTMarket is
         address _bidder,
         address _quoteToken,
         uint256 _price
-    ) external nonReentrant{
+    ) external nonReentrant {
         BidEntry memory bid = bids[_nft][_tokenId][_bidder];
         require(bid.price == _price, "AcceptBid: invalid price");
         require(bid.quoteToken == _quoteToken, "AcceptBid: invalid quoteToken");
@@ -269,7 +256,7 @@ contract ERC721NFTMarket is
         uint256 _tokenId,
         address _quoteToken,
         uint256 _price
-    ) external notContract nonReentrant{
+    ) external notContract nonReentrant {
         IERC20(_quoteToken).safeTransferFrom(
             _msgSender(),
             address(this),
