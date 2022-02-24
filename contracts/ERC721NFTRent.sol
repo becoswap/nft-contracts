@@ -102,30 +102,20 @@ contract ERC721NFTRent is
         address _quoteToken,
         uint256 _pricePerDay
     ) external nonReentrant notContract {
-        IERC721(_nft).safeTransferFrom(
-            address(msg.sender),
-            address(this),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(_msgSender(), address(this), _tokenId);
         lendings[_nft][_tokenId] = Lending({
-            lender: address(msg.sender),
+            lender: _msgSender(),
             renter: address(0x0),
             expiredAt: 0,
             quoteToken: _quoteToken,
             pricePerDay: _pricePerDay
         });
-        emit Lend(
-            _nft,
-            _tokenId,
-            address(msg.sender),
-            _quoteToken,
-            _pricePerDay
-        );
+        emit Lend(_nft, _tokenId, _msgSender(), _quoteToken, _pricePerDay);
     }
 
     function cancelLend(address _nft, uint256 _tokenId) external nonReentrant {
         require(
-            lendings[_nft][_tokenId].lender == msg.sender,
+            lendings[_nft][_tokenId].lender == _msgSender(),
             "ERC721NFTRent:only lender"
         );
         require(
@@ -133,11 +123,7 @@ contract ERC721NFTRent is
             "ERC721NFTRent: not expired"
         );
         delete lendings[_nft][_tokenId];
-        IERC721(_nft).safeTransferFrom(
-            address(this),
-            address(msg.sender),
-            _tokenId
-        );
+        IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
         emit CancelLend(_nft, _tokenId);
     }
 
@@ -156,20 +142,18 @@ contract ERC721NFTRent is
         address _quoteToken,
         uint256 _pricePerDay
     ) external nonReentrant notContract {
+        Lending memory lending = lendings[_nft][_tokenId];
+        require(lending.lender != address(0x0), "ERC721NFTRent: not listed");
         require(
-            lendings[_nft][_tokenId].lender != address(0x0),
-            "ERC721NFTRent: not listed"
-        );
-        require(
-            lendings[_nft][_tokenId].expiredAt <= block.timestamp,
+            lending.expiredAt <= block.timestamp,
             "ERC721NFTRent: has renter"
         );
         require(
-            lendings[_nft][_tokenId].pricePerDay == _pricePerDay,
+            lending.pricePerDay == _pricePerDay,
             "ERC721NFTRent: invalid pricePerDay"
         );
         require(
-            lendings[_nft][_tokenId].quoteToken == _quoteToken,
+            lending.quoteToken == _quoteToken,
             "ERC721NFTRent: invalid quoteToken"
         );
         require(
@@ -181,26 +165,16 @@ contract ERC721NFTRent is
         uint256 price = _pricePerDay.mul(rentDay);
 
         IERC20(_quoteToken).safeTransferFrom(
-            address(msg.sender),
+            _msgSender(),
             address(this),
             price
         );
         uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, price);
         uint256 netPrice = price.sub(fees);
-        IERC20(_quoteToken).safeTransfer(
-            lendings[_nft][_tokenId].lender,
-            netPrice
-        );
+        IERC20(_quoteToken).safeTransfer(lending.lender, netPrice);
         lendings[_nft][_tokenId].expiredAt = expiredAt;
-        lendings[_nft][_tokenId].renter = address(msg.sender);
-        emit Rent(
-            _nft,
-            _tokenId,
-            address(msg.sender),
-            expiredAt,
-            price,
-            netPrice
-        );
+        lendings[_nft][_tokenId].renter = _msgSender();
+        emit Rent(_nft, _tokenId, _msgSender(), expiredAt, price, netPrice);
     }
 
     /**
@@ -222,10 +196,10 @@ contract ERC721NFTRent is
             _duration >= 86400,
             "ERC721NFTRent: duration must be greater than 1 day"
         );
-        if (offers[_nft][_tokenId][address(msg.sender)].duration > 0) {
+        if (offers[_nft][_tokenId][_msgSender()].duration > 0) {
             _cancelOffer(_nft, _tokenId);
         }
-        offers[_nft][_tokenId][address(msg.sender)] = Offer({
+        offers[_nft][_tokenId][_msgSender()] = Offer({
             duration: _duration,
             quoteToken: _quoteToken,
             pricePerDay: _pricePerDay
@@ -233,14 +207,14 @@ contract ERC721NFTRent is
         uint256 rentDay = _duration.div(86400);
         uint256 price = _pricePerDay.mul(rentDay);
         IERC20(_quoteToken).safeTransferFrom(
-            address(msg.sender),
+            _msgSender(),
             address(this),
             price
         );
         emit OfferNew(
             _nft,
             _tokenId,
-            address(msg.sender),
+            _msgSender(),
             _duration,
             _quoteToken,
             _pricePerDay
@@ -258,15 +232,15 @@ contract ERC721NFTRent is
 
     function _cancelOffer(address _nft, uint256 _tokenId) private {
         require(
-            offers[_nft][_tokenId][address(msg.sender)].duration > 0,
+            offers[_nft][_tokenId][_msgSender()].duration > 0,
             "ERC721NFTRent: offer not found"
         );
-        Offer memory offer = offers[_nft][_tokenId][address(msg.sender)];
+        Offer memory offer = offers[_nft][_tokenId][_msgSender()];
         uint256 rentDay = offer.duration.div(86400);
         uint256 price = offer.pricePerDay.mul(rentDay);
-        IERC20(offer.quoteToken).safeTransfer(address(msg.sender), price);
-        delete offers[_nft][_tokenId][address(msg.sender)];
-        emit OfferCancel(_nft, _tokenId, address(msg.sender));
+        IERC20(offer.quoteToken).safeTransfer(_msgSender(), price);
+        delete offers[_nft][_tokenId][_msgSender()];
+        emit OfferCancel(_nft, _tokenId, _msgSender());
     }
 
     /**
@@ -285,20 +259,18 @@ contract ERC721NFTRent is
         address _quoteToken,
         uint256 _pricePerDay
     ) external nonReentrant {
+        Offer memory offer = offers[_nft][_tokenId][renter];
+        require(offer.duration > 0, "ERC721NFTRent: offer not found");
         require(
-            offers[_nft][_tokenId][renter].duration > 0,
-            "ERC721NFTRent: offer not found"
-        );
-        require(
-            offers[_nft][_tokenId][renter].quoteToken == _quoteToken,
+            offer.quoteToken == _quoteToken,
             "ERC721NFTRent: incorect quoteToken"
         );
         require(
-            offers[_nft][_tokenId][renter].pricePerDay == _pricePerDay,
+            offer.pricePerDay == _pricePerDay,
             "ERC721NFTRent: incorect pricePerDay"
         );
-         require(
-            offers[_nft][_tokenId][renter].duration == _duration,
+        require(
+            offer.duration == _duration,
             "ERC721NFTRent: incorect duration"
         );
         require(
@@ -306,16 +278,15 @@ contract ERC721NFTRent is
             "ERC721NFTRent: not expired"
         );
         address lender = lendings[_nft][_tokenId].lender;
-        if (lender !=  address(msg.sender)) {
+        if (lender != _msgSender()) {
             IERC721(_nft).safeTransferFrom(
-                address(msg.sender),
+                _msgSender(),
                 address(this),
                 _tokenId
             );
 
-            lender = address(msg.sender);
+            lender = _msgSender();
         }
-        Offer memory offer = offers[_nft][_tokenId][renter];
         uint256 rentDay = offer.duration.div(86400);
         uint256 price = offer.pricePerDay.mul(rentDay);
         uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, price);
