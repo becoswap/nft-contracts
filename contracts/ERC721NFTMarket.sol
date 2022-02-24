@@ -119,16 +119,16 @@ contract ERC721NFTMarket is
         // Verify price is not too low/high
         require(_price > 0, "Ask: Price must be greater than zero");
         IERC721(_nft).safeTransferFrom(
-            address(msg.sender),
+            _msgSender(),
             address(this),
             _tokenId
         );
         asks[_nft][_tokenId] = Ask({
-            seller: address(msg.sender),
+            seller: _msgSender(),
             quoteToken: _quoteToken,
             price: _price
         });
-        emit AskNew(address(msg.sender), _nft, _tokenId, _quoteToken, _price);
+        emit AskNew(_msgSender(), _nft, _tokenId, _quoteToken, _price);
     }
 
     /**
@@ -139,16 +139,16 @@ contract ERC721NFTMarket is
     function cancelAsk(address _nft, uint256 _tokenId) external nonReentrant {
         // Verify the sender has listed it
         require(
-            asks[_nft][_tokenId].seller == msg.sender,
-            "Ask: Token not listed"
+            asks[_nft][_tokenId].seller == _msgSender(),
+            "Ask: only seller"
         );
         IERC721(_nft).safeTransferFrom(
             address(this),
-            address(msg.sender),
+            _msgSender(),
             _tokenId
         );
         delete asks[_nft][_tokenId];
-        emit AskCancel(msg.sender, _nft, _tokenId);
+        emit AskCancel(_msgSender(), _nft, _tokenId);
     }
 
     /**
@@ -167,7 +167,7 @@ contract ERC721NFTMarket is
         require(asks[_nft][_tokenId].seller!= address(0), "token is not sell");
 
         IERC20(_quoteToken).safeTransferFrom(
-            address(msg.sender),
+            _msgSender(),
             address(this),
             _price
         );
@@ -184,18 +184,19 @@ contract ERC721NFTMarket is
 
         require(ask.quoteToken == _quoteToken, "Buy: Incorrect qoute token");
         require(ask.price == _price, "Buy: Incorrect price");
+
         uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, _price);
         uint256 netPrice = _price.sub(fees);
         IERC20(_quoteToken).safeTransfer(ask.seller, netPrice);
         IERC721(_nft).safeTransferFrom(
             address(this),
-            address(msg.sender),
+            _msgSender(),
             _tokenId
         );
         delete asks[_nft][_tokenId];
         emit Trade(
             ask.seller,
-            msg.sender,
+            _msgSender(),
             _nft,
             _tokenId,
             _quoteToken,
@@ -239,10 +240,10 @@ contract ERC721NFTMarket is
         require(bid.price == _price, "AcceptBid: invalid price");
         require(bid.quoteToken == _quoteToken, "AcceptBid: invalid quoteToken");
         address seller = asks[_nft][_tokenId].seller;
-        if (seller == msg.sender) {
+        if (seller == _msgSender()) {
             IERC721(_nft).safeTransferFrom(address(this), _bidder, _tokenId);
         } else {
-            seller = address(msg.sender);
+            seller = _msgSender();
             IERC721(_nft).safeTransferFrom(seller, _bidder, _tokenId);
         }
 
@@ -270,7 +271,7 @@ contract ERC721NFTMarket is
         uint256 _price
     ) external notContract nonReentrant{
         IERC20(_quoteToken).safeTransferFrom(
-            address(msg.sender),
+            _msgSender(),
             address(this),
             _price
         );
@@ -284,15 +285,15 @@ contract ERC721NFTMarket is
         uint256 _price
     ) private {
         require(_price > 0, "Bid: Price must be granter than zero");
-        if (bids[_nft][_tokenId][msg.sender].price > 0) {
+        if (bids[_nft][_tokenId][_msgSender()].price > 0) {
             // cancel old bid
             _cancelBid(_nft, _tokenId);
         }
-        bids[_nft][_tokenId][msg.sender] = BidEntry({
+        bids[_nft][_tokenId][_msgSender()] = BidEntry({
             price: _price,
             quoteToken: _quoteToken
         });
-        emit Bid(msg.sender, _nft, _tokenId, _quoteToken, _price);
+        emit Bid(_msgSender(), _nft, _tokenId, _quoteToken, _price);
     }
 
     function createBidUsingEth(address _nft, uint256 _tokenId)
@@ -310,11 +311,11 @@ contract ERC721NFTMarket is
     }
 
     function _cancelBid(address _nft, uint256 _tokenId) private {
-        BidEntry memory bid = bids[_nft][_tokenId][msg.sender];
+        BidEntry memory bid = bids[_nft][_tokenId][_msgSender()];
         require(bid.price > 0, "Bid: bid not found");
-        IERC20(bid.quoteToken).safeTransfer(address(msg.sender), bid.price);
-        delete bids[_nft][_tokenId][msg.sender];
-        emit CancelBid(msg.sender, _nft, _tokenId);
+        IERC20(bid.quoteToken).safeTransfer(_msgSender(), bid.price);
+        delete bids[_nft][_tokenId][_msgSender()];
+        emit CancelBid(_msgSender(), _nft, _tokenId);
     }
 
     function _isContract(address _addr) internal view returns (bool) {

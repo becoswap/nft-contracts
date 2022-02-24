@@ -27,7 +27,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
         for (uint256 i = 0; i < _groups.length; i++) {
             for (uint256 j = 0; j < _groups[i].tokenIds.length; j++) {
                 IERC721(_groups[i].nft).safeTransferFrom(
-                    address(msg.sender),
+                    _msgSender(),
                     address(this),
                     _groups[i].tokenIds[j]
                 );
@@ -37,7 +37,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
                 tokenIds: _groups[i].tokenIds
             }));
         }
-        _mint(address(msg.sender), _tokenIds.current());
+        _safeMint(_msgSender(), _tokenIds.current());
         emit CreatedBundle(_tokenIds.current(), _bundles[_tokenIds.current()]);
         return _tokenIds.current();
     }
@@ -51,7 +51,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder{
             for (uint256 j = 0; j < _bundles[bundleId][i].tokenIds.length; j++) {
                 IERC721(_bundles[bundleId][i].nft).safeTransferFrom(
                     address(this),
-                    address(msg.sender),
+                    _msgSender(),
                     _bundles[bundleId][i].tokenIds[j]
                 );
             }

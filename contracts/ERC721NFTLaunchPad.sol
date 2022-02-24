@@ -83,19 +83,19 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         require(launches.length > _launchIndex, "ERC721NFTLaunchPad: Launch not found");
         _checkLimit(_launchIndex);
         Launch storage launch = launches[_launchIndex];
-        ILaunchpadMinter(minter).mint(msg.sender, launch.level);
-        boughtCount[msg.sender][_launchIndex]++;
+        ILaunchpadMinter(minter).mint(_msgSender(), launch.level);
+        boughtCount[_msgSender()][_launchIndex]++;
         launch.totalSold++;
-        IERC20(dealToken).safeTransferFrom(address(msg.sender), treasuryAddress, launch.price);
-        Buy(msg.sender, _launchIndex);
+        IERC20(dealToken).safeTransferFrom(_msgSender(), treasuryAddress, launch.price);
+        Buy(_msgSender(), _launchIndex);
     }
 
     function _checkLimit(uint256 _launchIndex) private {
         Launch memory launch = launches[_launchIndex];
-        uint256 creditAmount = IStakePool(stakePool).getUserCredit(msg.sender);
+        uint256 creditAmount = IStakePool(stakePool).getUserCredit(_msgSender());
         uint256 maxCanBuy = creditAmount / launch.creditPrice;
         require(
-            maxCanBuy >= boughtCount[msg.sender][_launchIndex],
+            maxCanBuy >= boughtCount[_msgSender()][_launchIndex],
             "ERC721NFTLaunchPad: max can buy"
         );
         require(launch.totalSold < launch.maxSell, "ERC721NFTLaunchPad: sold out");

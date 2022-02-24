@@ -56,7 +56,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             this.nft.address,
             1000,
             { from: buyer}
-        ), "Ask: Token not listed")
+        ), "Ask: only seller")
 
         await this.nftMarket.cancelAsk(
             this.nft.address,

@@ -111,21 +111,21 @@ contract ERC721NFTAuction is
             "ERC721NFTAuction: _endTime must be greater than _startTime"
         );
         IERC721(_nft).safeTransferFrom(
-            address(msg.sender),
+            _msgSender(),
             address(this),
             _tokenId
         );
         auctions[_nft][_tokenId] = Auction({
             bidPrice: _price,
             bidder: address(0),
-            seller: address(msg.sender),
+            seller: _msgSender(),
             startTime: _startTime,
             endTime: _endTime,
             quoteToken: _quoteToken
         });
         emit AuctionCreated(
             _nft,
-            msg.sender,
+            _msgSender(),
             _tokenId,
             _startTime,
             _endTime,
@@ -141,7 +141,7 @@ contract ERC721NFTAuction is
      */
     function cancelAuction(address _nft, uint256 _tokenId) external nonReentrant{
         require(
-            auctions[_nft][_tokenId].seller == msg.sender,
+            auctions[_nft][_tokenId].seller == _msgSender(),
             "ERC721NFTAuction: only seller"
         );
         require(
@@ -150,7 +150,7 @@ contract ERC721NFTAuction is
         );
         IERC721(_nft).safeTransferFrom(
             address(this),
-            address(msg.sender),
+            _msgSender(),
             _tokenId
         );
         delete auctions[_nft][_tokenId];
@@ -208,7 +208,7 @@ contract ERC721NFTAuction is
             IWETH(WETH).deposit{value: _price}();
         } else {
             IERC20(auction.quoteToken).safeTransferFrom(
-                address(msg.sender),
+                _msgSender(),
                 address(this),
                 _price
             );
@@ -221,7 +221,7 @@ contract ERC721NFTAuction is
             );
         }
 
-        auction.bidder = address(msg.sender);
+        auction.bidder = _msgSender();
         auction.bidPrice = _price;
         emit Bid(_nft, auction.bidder, _tokenId, _price);
     }
