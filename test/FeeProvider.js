@@ -5,7 +5,7 @@ const FeeProvider = artifacts.require("./FeeProvider.sol");
 const TestFeeProvider = artifacts.require("./TestFeeProvider.sol");
 
 
-contract("FeeProvider", ([owner]) => {
+contract("FeeProvider", ([owner, user]) => {
     beforeEach(async () => {
         this.feeProvider = await FeeProvider.new();
         this.testFeeProvider = await TestFeeProvider.new();
@@ -42,5 +42,16 @@ contract("FeeProvider", ([owner]) => {
         r = await this.feeProvider.getFees(owner, 1);
         assert.equal(r[0][0], owner)
         assert.equal(r[1][0], 100)
+    })
+
+    it("only owner", async () => {
+        await expectRevert(
+            this.feeProvider.setRecipient(
+                user,
+                [user],
+                [1],
+                {from: user}
+            ), "Ownable: caller is not the owner"
+        )
     })
 })

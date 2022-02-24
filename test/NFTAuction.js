@@ -281,6 +281,12 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
 
     })
 
+    it ("Only Owner", async () => {
+        await expectRevert(this.nftAuction.setFeeProvider(this.nft.address, {from: buyer}), "Ownable: caller is not the owner")
+        await expectRevert(this.nftAuction.setProtocolFeeRecipient(this.nft.address, {from: buyer}), "Ownable: caller is not the owner")
+        await expectRevert(this.nftAuction.setProtocolFeePercent(10, {from: buyer}), "Ownable: caller is not the owner")
+    })
+
     it("Royalty fee", async () => {
         await this.feeProvider.setRecipient(
             this.nft.address,
