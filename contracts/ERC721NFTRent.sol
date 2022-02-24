@@ -291,7 +291,7 @@ contract ERC721NFTRent is
         uint256 price = offer.pricePerDay.mul(rentDay);
         uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, price);
         uint256 netPrice = price.sub(fees);
-        uint256 expiredAt = block.timestamp.add(rentDay * 86400);
+        uint256 expiredAt = block.timestamp.add(rentDay.mul(86400));
         IERC20(_quoteToken).safeTransfer(lender, netPrice);
         delete offers[_nft][_tokenId][renter];
         lendings[_nft][_tokenId] = Lending({
