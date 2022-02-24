@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+
 
 interface IStakePool {
     function getUserCredit(address user) external view returns (uint256);
@@ -18,6 +20,7 @@ interface ILaunchpadMinter {
 
 contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
+    using SafeMath for uint256;
 
     struct Launch {
         uint256 price;
@@ -101,7 +104,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         uint256 creditAmount = IStakePool(stakePool).getUserCredit(
             _msgSender()
         );
-        uint256 maxCanBuy = creditAmount / launch.creditPrice;
+        uint256 maxCanBuy = creditAmount.div(launch.creditPrice);
         require(
             maxCanBuy >= boughtCount[_msgSender()][_launchIndex],
             "ERC721NFTLaunchPad: max can buy"
