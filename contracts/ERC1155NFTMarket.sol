@@ -14,7 +14,7 @@ import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Erc721NFTFeeDistributor.sol";
 
-contract ERC1155Market is
+contract ERC1155NFTMarket is
     ReentrancyGuard,
     ERC1155Holder,
     Ownable,
@@ -115,6 +115,14 @@ contract ERC1155Market is
         address _quoteToken,
         uint256 _pricePerUnit
     ) external nonReentrant notContract {
+        require(
+            _quantity > 0,
+            "ERC1155NFTMarket: _quantity must be greater than zero"
+        );
+        require(
+            _pricePerUnit > 0,
+            "ERC1155NFTMarket: _pricePerUnit must be greater than zero"
+        );
         _askIds.increment();
         IERC1155(_nft).safeTransferFrom(
             _msgSender(),
@@ -150,7 +158,7 @@ contract ERC1155Market is
     function cancelAsk(uint256 askId) external nonReentrant {
         require(
             asks[askId].seller == _msgSender(),
-            "ERC1155Market: only seller"
+            "ERC1155NFTMarket: only seller"
         );
         Ask memory ask = asks[askId];
         IERC1155(ask.nft).safeTransferFrom(
@@ -179,6 +187,14 @@ contract ERC1155Market is
         address _quoteToken,
         uint256 _pricePerUnit
     ) external nonReentrant notContract {
+        require(
+            _quantity > 0,
+            "ERC1155NFTMarket: _quantity must be greater than zero"
+        );
+        require(
+            _pricePerUnit > 0,
+            "ERC1155NFTMarket: _pricePerUnit must be greater than zero"
+        );
         _offerIds.increment();
         IERC20(_quoteToken).safeTransferFrom(
             _msgSender(),
@@ -211,7 +227,7 @@ contract ERC1155Market is
     function cancelOffer(uint256 offerId) external nonReentrant {
         require(
             offers[offerId].buyer == _msgSender(),
-            "ERC1155Market: only offer owner"
+            "ERC1155NFTMarket: only offer owner"
         );
         Offer memory offer = offers[offerId];
         IERC20(offer.quoteToken).safeTransfer(
@@ -232,6 +248,14 @@ contract ERC1155Market is
         nonReentrant
         notContract
     {
+        require(
+            quantity > 0,
+            "ERC1155NFTMarket: quantity must be greater than zero"
+        );
+        require(
+            offers[offerId].quantity >= quantity,
+            "ERC1155NFTMarket: quantity is not enought"
+        );
         Offer storage offer = offers[offerId];
         offer.quantity = offer.quantity.sub(quantity);
         IERC1155(offer.nft).safeTransferFrom(
@@ -266,9 +290,23 @@ contract ERC1155Market is
         nonReentrant
         notContract
     {
+        require(
+            quantity > 0,
+            "ERC1155NFTMarket: quantity must be greater than zero"
+        );
+        require(
+            asks[askId].quantity >= quantity,
+            "ERC1155NFTMarket: quantity is not enought"
+        );
         Ask storage ask = asks[askId];
         ask.quantity = ask.quantity.sub(quantity);
         uint256 price = ask.pricePerUnit.mul(quantity);
+        IERC20(ask.quoteToken).safeTransferFrom(
+            _msgSender(),
+            address(this),
+            price
+        );
+
         uint256 fees = _distributeFees(
             ask.nft,
             ask.tokenId,
@@ -276,11 +314,7 @@ contract ERC1155Market is
             price
         );
         uint256 netPrice = price.sub(fees);
-        IERC20(ask.quoteToken).safeTransferFrom(
-            _msgSender(),
-            ask.seller,
-            netPrice
-        );
+        IERC20(ask.quoteToken).safeTransfer(ask.seller, netPrice);
         IERC1155(ask.nft).safeTransferFrom(
             address(this),
             _msgSender(),

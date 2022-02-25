@@ -55,7 +55,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
     })
 
     it("Auction", async () => {
-        const time = Math.floor(new Date().getTime()/1000);
+        const time = await getLastBlockTimestamp();
 
         await expectRevert(
             this.nftAuction.createAuction(
@@ -84,9 +84,20 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
             1000,
             this.usdt.address,
             1,
-            time + 100,
+            time + 200,
             time  + 1000
         )
+
+        await expectRevert( 
+            this.nftAuction.bid(
+                this.nft.address,
+                1000,
+                this.usdt.address,
+                100,
+                { from: buyer}
+            ), "ERC721NFTAuction: auction not started"
+        )
+        
 
         
         await expectRevert( 
@@ -100,15 +111,6 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
             ), "ERC721: transfer of token that is not own"
         )
         
-        await expectRevert( 
-            this.nftAuction.bid(
-                this.nft.address,
-                1000,
-                this.usdt.address,
-                100,
-                { from: buyer}
-            ), "ERC721NFTAuction: auction not started"
-        )
         
 
         await mineBlockWithTS(time +200)
