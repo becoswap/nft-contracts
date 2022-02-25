@@ -185,7 +185,7 @@ contract ERC721NFTRent is
      * @param _quoteToken: quote token address
      * @param _pricePerDay: Price per day
      */
-    function offer(
+    function createOffer(
         address _nft,
         uint256 _tokenId,
         uint256 _duration,

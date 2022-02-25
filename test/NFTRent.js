@@ -168,7 +168,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             {from: renter}
         )
 
-        await this.rent.offer(
+        await this.rent.createOffer(
             this.nft.address,
             1,
             60 * 60 * 24,
@@ -205,7 +205,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             20
         );
 
-        await this.rent.offer(
+        await this.rent.createOffer(
             this.nft.address,
             1,
             60 * 60 * 24,
@@ -226,7 +226,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
 
     it("Offer", async () => {
         await expectRevert(
-            this.rent.offer(
+            this.rent.createOffer(
                 this.nft.address,
                 1,
                 60,
@@ -237,7 +237,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             "ERC721NFTRent: duration must be greater than 1 day"
         )
 
-        await this.rent.offer(
+        await this.rent.createOffer(
             this.nft.address,
             1,
             60 * 60 * 24,
@@ -293,7 +293,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
     })
     
     it("CancelOffer", async () => {
-        await this.rent.offer(
+        await this.rent.createOffer(
             this.nft.address,
             1,
             60 * 60 * 24,
