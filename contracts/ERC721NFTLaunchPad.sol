@@ -36,7 +36,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
     address public dealToken;
 
     // user address => launchIndex => ask
-    mapping(address => mapping(uint256 => uint256)) boughtCount;
+    mapping(address => mapping(uint256 => uint256)) public boughtCount;
     Launch[] public launches;
 
     event Buy(address indexed user, uint256 _launchIndex);
