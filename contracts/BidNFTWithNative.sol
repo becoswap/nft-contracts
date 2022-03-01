@@ -87,7 +87,7 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable, ReentrancyGuard {
         emit SetFeePercent(_msgSender(), 0, feePercent);
     }
 
-    function buyToken(uint256 _tokenId) public payable whenNotPaused nonReentrant{
+    function buyToken(uint256 _tokenId) public payable whenNotPaused{
         buyTokenTo(_tokenId, _msgSender());
     }
 
@@ -128,7 +128,7 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable, ReentrancyGuard {
         emit Ask(_msgSender(), _tokenId, _price);
     }
     
-    function batchSetCurrentPrice(uint256[] calldata _tokenIds, uint256[] calldata _prices) public nonReentrant{
+    function batchSetCurrentPrice(uint256[] calldata _tokenIds, uint256[] calldata _prices) public{
         require(_tokenIds.length == _prices.length);
         for (uint i = 0; i < _tokenIds.length; i++) {
             setCurrentPrice(_tokenIds[i], _prices[i]);
@@ -138,12 +138,11 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable, ReentrancyGuard {
     function readyToSellToken(uint256 _tokenId, uint256 _price)
         public
         whenNotPaused
-        nonReentrant
     {
         readyToSellTokenTo(_tokenId, _price, address(_msgSender()));
     }
     
-    function batchReadyToSellToken(uint256[] calldata _tokenIds, uint256[] calldata _prices) public nonReentrant{
+    function batchReadyToSellToken(uint256[] calldata _tokenIds, uint256[] calldata _prices) public{
         require(_tokenIds.length == _prices.length);
         for (uint i = 0; i < _tokenIds.length; i++) {
             readyToSellToken(_tokenIds[i], _prices[i]);
@@ -181,7 +180,7 @@ contract BidNFTWithNative is ERC721Holder, Ownable, Pausable, ReentrancyGuard {
         emit CancelSellToken(_msgSender(), _tokenId);
     }
     
-    function batchCancelSellToken(uint256[] calldata _tokenIds) public nonReentrant{
+    function batchCancelSellToken(uint256[] calldata _tokenIds) public{
         for (uint i = 0; i < _tokenIds.length; i ++) {
             cancelSellToken(_tokenIds[i]);
         }
