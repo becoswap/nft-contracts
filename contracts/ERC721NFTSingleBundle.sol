@@ -6,37 +6,40 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
-    using EnumerableSet for EnumerableSet.UintSet;
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
     address public nft;
-    mapping(uint256 => EnumerableSet.UintSet) _bundles;
+    mapping(uint256 => uint256[]) _bundles;
 
     event BundleNew(uint256 tokenId, uint256[] tokenIds);
     event BundleAdd(uint256 tokenId, uint256[] tokenIds);
     event BundleRemove(uint256 tokenId, uint256[] tokenIds);
 
-    constructor(string memory _name, string memory _symbol)
-        public
-        ERC721(_name, _symbol)
-    {}
+    constructor(
+        address _nft,
+        string memory _name,
+        string memory _symbol
+    ) public ERC721(_name, _symbol) {
+        nft = _nft;
+    }
 
     /**
      * @notice create bundle
      * @param tokenIds: id of tokens
      */
-    function createBundle(uint256[] tokenIds) external returns (uint256) {
+    function createBundle(uint256[] memory tokenIds)
+        external
+        returns (uint256)
+    {
         _tokenIds.increment();
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             IERC721(nft).safeTransferFrom(_msgSender(), address(this), tokenId);
-            _bundles[_tokenIds.current()].add(tokenId);
         }
-
+        _bundles[_tokenIds.current()] = tokenIds;
         _safeMint(_msgSender(), _tokenIds.current());
         emit BundleNew(_tokenIds.current(), tokenIds);
         return _tokenIds.current();
@@ -50,33 +53,51 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
     function addItems(uint256 bundleId, uint256[] memory tokenIds) external {
         require(
             _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721Burnable: caller is not owner nor approved"
+            "ERC721NFTSingleBundle: caller is not owner nor approved"
         );
         for (uint256 i = 0; i < tokenIds.length; i++) {
             uint256 tokenId = tokenIds[i];
             IERC721(nft).safeTransferFrom(_msgSender(), address(this), tokenId);
-            _bundles[bundleId].add(tokenId);
+            _bundles[bundleId].push(tokenId);
         }
         emit BundleAdd(bundleId, tokenIds);
+    }
+
+    function _removeItem(uint256 bundleId, uint256 tokenId)
+        private
+        returns (bool)
+    {
+        for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
+            if (_bundles[bundleId][i] == tokenId) {
+                uint256 lastIndex = _bundles[bundleId].length - 1;
+                _bundles[bundleId][i] = _bundles[bundleId][lastIndex];
+                _bundles[bundleId].pop();
+                IERC721(nft).safeTransferFrom(
+                    address(this),
+                    _msgSender(),
+                    tokenId
+                );
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
      * @notice remove items
      * @param bundleId: id of bundle
-     * @param tokenIds: id of tokens
+     * @param tokenIds: index
      */
     function removeItems(uint256 bundleId, uint256[] memory tokenIds) external {
         require(
             _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721Burnable: caller is not owner nor approved"
+            "ERC721NFTSingleBundle: caller is not owner nor approved"
         );
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            uint256 tokenId = tokenIds[i];
-            require(_bundles[bundleId].has(tokenId), "invalid token id");
-            _bundles[bundleId].remove(tokenId);
-            IERC721(nft).safeTransferFrom(address(this), _msgSender(), tokenId);
+            bool removed = _removeItem(bundleId, tokenIds[i]);
+            require(removed, "ERC721NFTSingleBundle: not removed");
         }
-        if (_bundles[bundleId].length() == 0) {
+        if (_bundles[bundleId].length == 0) {
             _burn(bundleId);
         } else {
             emit BundleRemove(bundleId, tokenIds);
@@ -90,13 +111,13 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
     function removeAllItems(uint256 bundleId) external {
         require(
             _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721Burnable: caller is not owner nor approved"
+            "ERC721NFTSingleBundle: caller is not owner nor approved"
         );
-        for (uint256 i = 0; i < _bundles[bundleId].length(); i++) {
-            uint256 tokenId = _bundles[bundleId].at(i);
+        for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
+            uint256 tokenId = _bundles[bundleId][i];
             IERC721(nft).safeTransferFrom(address(this), _msgSender(), tokenId);
-            _bundles[bundleId].remove(tokenId);
         }
+        delete _bundles[bundleId];
         _burn(bundleId);
     }
 
@@ -105,14 +126,20 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
         uint256 start,
         uint256 end
     ) external view returns (uint256[] memory) {
-        uint8[end - start] memory tokenIds;
+        uint256[] memory tokenIds = new uint256[](end - start);
+        uint256 j = 0;
         for (uint256 i = start; i < end; i++) {
-            tokenIds.push(_bundles[bundleId].at(i));
+            tokenIds[j] = _bundles[bundleId][i];
+            j++;
         }
         return tokenIds;
     }
 
-    function allBundleItemLength(uint256 bundleId) external returns (uint256) {
-        return _bundles[bundleId].length();
+    function bundleItemLength(uint256 bundleId)
+        external
+        view
+        returns (uint256)
+    {
+        return _bundles[bundleId].length;
     }
 }
