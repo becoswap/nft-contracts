@@ -32,12 +32,9 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
     function createBundle(uint256[] tokenIds) external returns (uint256) {
         _tokenIds.increment();
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            IERC721(nft).safeTransferFrom(
-                _msgSender(),
-                address(this),
-                tokenIds[j]
-            );
-            _bundles[_tokenIds.current()].add(tokenIds[j]);
+            uint256 tokenId = tokenIds[i];
+            IERC721(nft).safeTransferFrom(_msgSender(), address(this), tokenId);
+            _bundles[_tokenIds.current()].add(tokenId);
         }
 
         _safeMint(_msgSender(), _tokenIds.current());
