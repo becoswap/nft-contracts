@@ -35,6 +35,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.nft.address,
             100,
+            "0x",
             {from: renter}
         ), "ERC721NFTRent: invalid quoteToken")
 
@@ -44,6 +45,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             1010,
+            "0x",
             {from: renter}
         ), "ERC721NFTRent: invalid pricePerDay")
 
@@ -53,6 +55,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             86300,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         ), "ERC721NFTRent: duration must be greater than 1 day")
 
@@ -63,6 +66,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 40,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         )
 
@@ -80,6 +84,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         ), "ERC721NFTRent: has renter")
 
@@ -89,6 +94,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         ), "ERC721NFTRent: not listed")
     })
@@ -131,6 +137,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         )
 
@@ -165,6 +172,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             20,
+            "0x",
             {from: renter}
         )
 
@@ -174,6 +182,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             10,
+            "0x",
             {from: renter}
         )
 
@@ -211,6 +220,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             10,
+            "0x",
             {from: renter}
         )
 
@@ -232,6 +242,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
                 60,
                 this.usdt.address,
                 100,
+                "0x",
                 {from: renter}
             ),
             "ERC721NFTRent: duration must be greater than 1 day"
@@ -243,6 +254,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         )
 
@@ -299,6 +311,7 @@ contract("ERC721NFTRent", ([owner, renter, feeAddr]) => {
             60 * 60 * 24,
             this.usdt.address,
             100,
+            "0x",
             {from: renter}
         )
 

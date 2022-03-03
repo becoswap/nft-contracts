@@ -10,12 +10,14 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Erc721NFTFeeDistributor.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import "./Erc721Fingerprint.sol";
 
 contract ERC721NFTRent is
     ERC721Holder,
     Ownable,
     Erc721NFTFeeDistributor,
-    ReentrancyGuard
+    ReentrancyGuard,
+    Erc721Fingerprint
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -32,6 +34,7 @@ contract ERC721NFTRent is
         uint256 duration; // duration
         address quoteToken; // quote token
         uint256 pricePerDay; // price per day
+        bytes32 fingerprint;
     }
 
     mapping(address => mapping(uint256 => Lending)) public lendings;
@@ -140,10 +143,13 @@ contract ERC721NFTRent is
         uint256 _tokenId,
         uint256 _duration,
         address _quoteToken,
-        uint256 _pricePerDay
+        uint256 _pricePerDay,
+        bytes32 _fingerprint
     ) external nonReentrant notContract {
         Lending memory lending = lendings[_nft][_tokenId];
         require(lending.lender != address(0x0), "ERC721NFTRent: not listed");
+        _validateFingerprint(_nft, _tokenId, _fingerprint);
+
         require(
             lending.expiredAt <= block.timestamp,
             "ERC721NFTRent: has renter"
@@ -190,7 +196,8 @@ contract ERC721NFTRent is
         uint256 _tokenId,
         uint256 _duration,
         address _quoteToken,
-        uint256 _pricePerDay
+        uint256 _pricePerDay,
+        bytes32 _fingerprint
     ) external nonReentrant notContract {
         require(
             _duration >= 86400,
@@ -202,7 +209,8 @@ contract ERC721NFTRent is
         offers[_nft][_tokenId][_msgSender()] = Offer({
             duration: _duration,
             quoteToken: _quoteToken,
-            pricePerDay: _pricePerDay
+            pricePerDay: _pricePerDay,
+            fingerprint: _fingerprint
         });
         uint256 rentDay = _duration.div(86400);
         uint256 price = _pricePerDay.mul(rentDay);
@@ -261,6 +269,7 @@ contract ERC721NFTRent is
     ) external nonReentrant {
         Offer memory offer = offers[_nft][_tokenId][renter];
         require(offer.duration > 0, "ERC721NFTRent: offer not found");
+        _validateFingerprint(_nft, _tokenId, offer.fingerprint);
         require(
             offer.quoteToken == _quoteToken,
             "ERC721NFTRent: incorect quoteToken"
