@@ -20,6 +20,8 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
     mapping(uint256 => Group[]) private _bundles;
 
     event CreatedBundle(uint256 tokenId, Group[] groups);
+    event BundleAdd(uint256 tokenId, Group[] groups);
+    event BundleRemove(uint256 tokenId, Group[] groups);
     event MetadataUpdate(uint256 tokenId, string data);
 
     constructor() ERC721("BecoNFTBundle", "BNU") {}
@@ -27,7 +29,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
     function updateMetdata(uint256 bundleId, string memory data) external {
         require(
             _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721NFTSingleBundle: caller is not owner nor approved"
+            "ERC721NFTBundle: caller is not owner nor approved"
         );
         metadata[bundleId] = data;
         emit MetadataUpdate(bundleId, data);
@@ -52,10 +54,96 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
         return _tokenIds.current();
     }
 
+    function addBundleItems(uint256 bundleId, Group[] memory _groups) external {
+        require(
+            _isApprovedOrOwner(_msgSender(), bundleId),
+            "ERC721NFTBundle: caller is not owner nor approved"
+        );
+
+        for (uint256 i = 0; i < _groups.length; i++) {
+            _addBundleGroup(bundleId, _groups[i]);
+        }
+        emit BundleAdd(bundleId, _groups);
+    }
+
+    function _addBundleGroup(uint256 bundleId, Group memory _group) private {
+        bool added;
+        for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
+            if (_bundles[bundleId][i].nft == _group.nft) {
+                for (uint256 j = 0; j < _group.tokenIds.length; j++) {
+                    uint256 tokenId = _group.tokenIds[j];
+                    IERC721(_group.nft).safeTransferFrom(
+                        _msgSender(),
+                        address(this),
+                        tokenId
+                    );
+                    _bundles[bundleId][i].tokenIds.push(tokenId);
+                    added = true;
+                }
+            }
+        }
+        require(added, "ERC721NFTBundle: not added");
+    }
+
+    function removeBundleItems(uint256 bundleId, Group[] memory _groups)
+        external
+    {
+        require(
+            _isApprovedOrOwner(_msgSender(), bundleId),
+            "ERC721NFTBundle: caller is not owner nor approved"
+        );
+
+        for (uint256 i = 0; i < _groups.length; i++) {
+            _removeBundleGroup(bundleId, _groups[i]);
+        }
+
+        if (_bundles[bundleId].length == 0) {
+            _burn(bundleId);
+        } else {
+            emit BundleRemove(bundleId, _groups);
+        }
+    }
+
+    function _removeBundleGroup(uint256 bundleId, Group memory _group) private {
+        uint256 removeCount;
+        for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
+            if (_bundles[bundleId][i].nft == _group.nft) {
+                for (uint256 j = 0; j < _group.tokenIds.length; j++) {
+                    for (
+                        uint256 jj = 0;
+                        jj < _bundles[bundleId][i].tokenIds.length;
+                        jj++
+                    ) {
+                        uint256 tokenId = _group.tokenIds[j];
+                        if (_bundles[bundleId][i].tokenIds[jj] == tokenId) {
+                            uint256 lastIndex = _bundles[bundleId][i]
+                                .tokenIds
+                                .length - 1;
+                            _bundles[bundleId][i].tokenIds[jj] = _bundles[
+                                bundleId
+                            ][i].tokenIds[lastIndex];
+                            _bundles[bundleId][i].tokenIds.pop();
+                            IERC721(_group.nft).safeTransferFrom(
+                                address(this),
+                                _msgSender(),
+                                tokenId
+                            );
+                            removeCount++;
+                        }
+                    }
+                }
+            }
+        }
+        require(
+            removeCount == _group.tokenIds.length,
+            "ERC721NFTBundle: not removed"
+        );
+    }
+
     function removeBundle(uint256 bundleId) external {
         require(
             _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721Burnable: caller is not owner nor approved"
+            "ERC721NFTBundle: caller is not owner nor approved"
         );
         for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
             for (

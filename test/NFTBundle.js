@@ -44,7 +44,7 @@ contract("ERC721NFTBundle", ([owner, user1]) => {
         assert.equal(await this.nft1.ownerOf(1), this.bundle.address);
         assert.equal(await this.nft2.ownerOf(1), this.bundle.address);
 
-        await expectRevert(this.bundle.removeBundle(1, {from: user1}), "ERC721Burnable: caller is not owner nor approved")
+        await expectRevert(this.bundle.removeBundle(1, {from: user1}), "ERC721NFTBundle: caller is not owner nor approved")
 
         await this.bundle.removeBundle(1);
 
