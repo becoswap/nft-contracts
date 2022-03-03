@@ -156,7 +156,7 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
     /**
      * @dev Verifies a checksum of the contents of the Bundle
      * @param bundleId the bundleId to be verified
-     * @param fingerprint the user provided identification of the Estate contents
+     * @param fingerprint the user provided identification of the Bundle contents
      */
     function verifyFingerprint(uint256 bundleId, bytes32 fingerprint)
         public
