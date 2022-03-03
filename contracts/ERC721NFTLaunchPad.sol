@@ -99,7 +99,7 @@ contract ERC721NFTLaunchPad is ReentrancyGuard, Ownable {
         Buy(_msgSender(), _launchIndex);
     }
 
-    function _checkLimit(uint256 _launchIndex) private {
+    function _checkLimit(uint256 _launchIndex) private  view{
         Launch memory launch = launches[_launchIndex];
         uint256 creditAmount = IStakePool(stakePool).getUserCredit(
             _msgSender()

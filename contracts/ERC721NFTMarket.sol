@@ -13,12 +13,14 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWETH.sol";
 import "./Erc721NFTFeeDistributor.sol";
+import "./Erc721Fingerprint.sol";
 
 contract ERC721NFTMarket is
     ERC721Holder,
     Ownable,
     ReentrancyGuard,
-    Erc721NFTFeeDistributor
+    Erc721NFTFeeDistributor,
+    Erc721Fingerprint
 {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -34,6 +36,7 @@ contract ERC721NFTMarket is
     struct BidEntry {
         address quoteToken;
         uint256 price;
+        bytes32 fingerprint;
     }
 
     address public immutable WETH;
@@ -153,29 +156,30 @@ contract ERC721NFTMarket is
         address _nft,
         uint256 _tokenId,
         address _quoteToken,
-        uint256 _price
+        uint256 _price,
+        bytes32 _fingeprint
     ) external notContract nonReentrant {
         require(asks[_nft][_tokenId].seller != address(0), "token is not sell");
-
         IERC20(_quoteToken).safeTransferFrom(
             _msgSender(),
             address(this),
             _price
         );
-        _buy(_nft, _tokenId, _quoteToken, _price);
+        _buy(_nft, _tokenId, _quoteToken, _price, _fingeprint);
     }
 
     function _buy(
         address _nft,
         uint256 _tokenId,
         address _quoteToken,
-        uint256 _price
+        uint256 _price,
+        bytes32 _fingeprint
     ) private {
         Ask memory ask = asks[_nft][_tokenId];
 
         require(ask.quoteToken == _quoteToken, "Buy: Incorrect qoute token");
         require(ask.price == _price, "Buy: Incorrect price");
-
+        _validateFingerprint(_nft, _tokenId, _fingeprint);
         uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, _price);
         uint256 netPrice = _price.sub(fees);
         IERC20(_quoteToken).safeTransfer(ask.seller, netPrice);
@@ -197,15 +201,14 @@ contract ERC721NFTMarket is
      * @param _nft: contract address of the NFT
      * @param _tokenId: tokenId of the NFT
      */
-    function buyUsingEth(address _nft, uint256 _tokenId)
-        external
-        payable
-        nonReentrant
-        notContract
-    {
+    function buyUsingEth(
+        address _nft,
+        uint256 _tokenId,
+        bytes32 _fingerprint
+    ) external payable nonReentrant notContract {
         require(asks[_nft][_tokenId].seller != address(0), "token is not sell");
         IWETH(WETH).deposit{value: msg.value}();
-        _buy(_nft, _tokenId, WETH, msg.value);
+        _buy(_nft, _tokenId, WETH, msg.value, _fingerprint);
     }
 
     /**
@@ -226,6 +229,8 @@ contract ERC721NFTMarket is
         BidEntry memory bid = bids[_nft][_tokenId][_bidder];
         require(bid.price == _price, "AcceptBid: invalid price");
         require(bid.quoteToken == _quoteToken, "AcceptBid: invalid quoteToken");
+        _validateFingerprint(_nft, _tokenId, bid.fingerprint);
+
         address seller = asks[_nft][_tokenId].seller;
         if (seller == _msgSender()) {
             IERC721(_nft).safeTransferFrom(address(this), _bidder, _tokenId);
@@ -255,21 +260,23 @@ contract ERC721NFTMarket is
         address _nft,
         uint256 _tokenId,
         address _quoteToken,
-        uint256 _price
+        uint256 _price,
+        bytes32 _fingerprint
     ) external notContract nonReentrant {
         IERC20(_quoteToken).safeTransferFrom(
             _msgSender(),
             address(this),
             _price
         );
-        _createBid(_nft, _tokenId, _quoteToken, _price);
+        _createBid(_nft, _tokenId, _quoteToken, _price, _fingerprint);
     }
 
     function _createBid(
         address _nft,
         uint256 _tokenId,
         address _quoteToken,
-        uint256 _price
+        uint256 _price,
+        bytes32 _fingerprint
     ) private {
         require(_price > 0, "Bid: Price must be granter than zero");
         if (bids[_nft][_tokenId][_msgSender()].price > 0) {
@@ -278,19 +285,19 @@ contract ERC721NFTMarket is
         }
         bids[_nft][_tokenId][_msgSender()] = BidEntry({
             price: _price,
-            quoteToken: _quoteToken
+            quoteToken: _quoteToken,
+            fingerprint: _fingerprint
         });
         emit Bid(_msgSender(), _nft, _tokenId, _quoteToken, _price);
     }
 
-    function createBidUsingEth(address _nft, uint256 _tokenId)
-        external
-        payable
-        notContract
-        nonReentrant
-    {
+    function createBidUsingEth(
+        address _nft,
+        uint256 _tokenId,
+        bytes32 _fingperprint
+    ) external payable notContract nonReentrant {
         IWETH(WETH).deposit{value: msg.value}();
-        _createBid(_nft, _tokenId, WETH, msg.value);
+        _createBid(_nft, _tokenId, WETH, msg.value, _fingperprint);
     }
 
     function cancelBid(address _nft, uint256 _tokenId) external nonReentrant {

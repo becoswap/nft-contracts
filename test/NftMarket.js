@@ -72,6 +72,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc202.address,
             1000,
+            "0x",
             {from: buyer}
         ), "token is not sell")
 
@@ -88,6 +89,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc202.address,
             1000,
+            "0x",
             {from: buyer}
         ), "Buy: Incorrect qoute token")
 
@@ -96,6 +98,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             500,
+            "0x",
             {from: buyer}
         ), "Buy: Incorrect price")
 
@@ -104,6 +107,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             1001,
+            "0x",
             {from: buyer}
         ), "Buy: Incorrect price")
 
@@ -112,6 +116,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             1000,
+            "0x",
             {from: buyer}
         )
 
@@ -123,6 +128,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
         await expectRevert(this.nftMarket.buyUsingEth(
             this.nft.address,
             1000,
+            "0x",
             {from: buyer}
         ), "token is not sell")
 
@@ -136,6 +142,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
         await this.nftMarket.buyUsingEth(
             this.nft.address,
             1000,
+            "0x",
             {from: buyer, value: 1}
         )
 
@@ -149,6 +156,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             1000,
+            "0x",
             { from: buyer}
         );
         await expectRevert(
@@ -157,6 +165,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
                 1000,
                 this.erc20.address,
                 0,
+                "0x",
                 { from: buyer}
             ),
              "Bid: Price must be granter than zero"
@@ -202,6 +211,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
         await this.nftMarket.createBidUsingEth(
             this.nft.address,
             1000,
+            "0x",
             { from: buyer, value: 1}
         );
 
@@ -222,6 +232,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             1000,
+            "0x",
             { from: buyer}
         );
 
@@ -248,6 +259,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             500,
+            "0x",
             { from: buyer}
         );
 
@@ -256,6 +268,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             600,
+            "0x",
             { from: buyer}
         );
 
@@ -274,6 +287,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             100,
+            "0x",
             { from: buyer}
         );
         await this.nftMarket.acceptBid(
@@ -309,6 +323,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
             1000,
             this.erc20.address,
             100,
+            "0x",
             { from: buyer}
         )
 

@@ -20,7 +20,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
 
     event CreatedBundle(uint256 tokenId, Group[] groups);
 
-    constructor() public ERC721("BecoNFTBundle", "BNU") {}
+    constructor() ERC721("BecoNFTBundle", "BNU") {}
 
     function createBundle(Group[] memory _groups) external returns (uint256) {
         _tokenIds.increment();
@@ -69,5 +69,44 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
         returns (Group[] memory)
     {
         return _bundles[bundleId];
+    }
+
+    /**
+     * @dev Creates a checksum of the contents of the Bundle
+     * @param bundleId the bundleId to be verified
+     */
+    function getFingerprint(uint256 bundleId)
+        public
+        view
+        returns (bytes32 result)
+    {
+        result = keccak256(abi.encodePacked("bundleId", bundleId));
+
+        uint256 length = _bundles[bundleId].length;
+        for (uint256 i = 0; i < length; i++) {
+            result ^= keccak256(abi.encodePacked(_bundles[bundleId][i].nft));
+            for (
+                uint256 j = 0;
+                j < _bundles[bundleId][i].tokenIds.length;
+                j++
+            ) {
+                uint256 tokenId = _bundles[bundleId][i].tokenIds[i];
+                result ^= keccak256(abi.encodePacked(tokenId));
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @dev Verifies a checksum of the contents of the Bundle
+     * @param bundleId the bundleId to be verified
+     * @param fingerprint the user provided identification of the Estate contents
+     */
+    function verifyFingerprint(uint256 bundleId, bytes32 fingerprint)
+        public
+        view
+        returns (bool)
+    {
+        return getFingerprint(bundleId) == fingerprint;
     }
 }
