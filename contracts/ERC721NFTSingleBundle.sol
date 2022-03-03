@@ -13,10 +13,12 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
 
     address public nft;
     mapping(uint256 => uint256[]) _bundles;
+    mapping(uint256 => string) public metadata;
 
     event BundleNew(uint256 tokenId, uint256[] tokenIds);
     event BundleAdd(uint256 tokenId, uint256[] tokenIds);
     event BundleRemove(uint256 tokenId, uint256[] tokenIds);
+    event MetadataUpdate(uint256 tokenId, string data);
 
     constructor(
         address _nft,
@@ -121,9 +123,11 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
         _burn(bundleId);
     }
 
-    function getBundleItems(
-        uint256 bundleId
-    ) external view returns (uint256[] memory) {
+    function getBundleItems(uint256 bundleId)
+        external
+        view
+        returns (uint256[] memory)
+    {
         return _bundles[bundleId];
     }
 
@@ -133,6 +137,15 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
         returns (uint256)
     {
         return _bundles[bundleId].length;
+    }
+
+    function updateMetdata(uint256 bundleId, string memory data) external {
+        require(
+            _isApprovedOrOwner(_msgSender(), bundleId),
+            "ERC721NFTSingleBundle: caller is not owner nor approved"
+        );
+        metadata[bundleId] = data;
+        emit MetadataUpdate(bundleId, data);
     }
 
     /**

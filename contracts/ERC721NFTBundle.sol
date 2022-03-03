@@ -10,6 +10,7 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 contract ERC721NFTBundle is ERC721, ERC721Holder {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
+    mapping(uint256 => string) public metadata;
 
     struct Group {
         address nft;
@@ -19,8 +20,18 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
     mapping(uint256 => Group[]) private _bundles;
 
     event CreatedBundle(uint256 tokenId, Group[] groups);
+    event MetadataUpdate(uint256 tokenId, string data);
 
     constructor() ERC721("BecoNFTBundle", "BNU") {}
+
+    function updateMetdata(uint256 bundleId, string memory data) external {
+        require(
+            _isApprovedOrOwner(_msgSender(), bundleId),
+            "ERC721NFTSingleBundle: caller is not owner nor approved"
+        );
+        metadata[bundleId] = data;
+        emit MetadataUpdate(bundleId, data);
+    }
 
     function createBundle(Group[] memory _groups) external returns (uint256) {
         _tokenIds.increment();
