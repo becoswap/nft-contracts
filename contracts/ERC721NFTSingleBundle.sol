@@ -100,6 +100,7 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
             require(removed, "ERC721NFTSingleBundle: not removed");
         }
         if (_bundles[bundleId].length == 0) {
+            delete metadata[bundleId];
             _burn(bundleId);
         } else {
             emit BundleRemove(bundleId, tokenIds);
@@ -120,6 +121,7 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
             IERC721(nft).safeTransferFrom(address(this), _msgSender(), tokenId);
         }
         delete _bundles[bundleId];
+        delete metadata[bundleId];
         _burn(bundleId);
     }
 

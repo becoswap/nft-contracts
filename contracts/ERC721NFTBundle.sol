@@ -97,7 +97,14 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
             _removeBundleGroup(bundleId, _groups[i]);
         }
 
-        if (_bundles[bundleId].length == 0) {
+        uint256 totalTokens;
+        for (uint256 i = 0; i < _bundles[bundleId].length; i++) {
+            totalTokens += _bundles[bundleId][i].tokenIds.length;
+        }
+
+        if (totalTokens == 0) {
+            delete _bundles[bundleId];
+            delete metadata[bundleId];
             _burn(bundleId);
         } else {
             emit BundleRemove(bundleId, _groups);
@@ -159,6 +166,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
             }
         }
         delete _bundles[bundleId];
+        delete metadata[bundleId];
         _burn(bundleId);
     }
 
@@ -189,7 +197,7 @@ contract ERC721NFTBundle is ERC721, ERC721Holder {
                 j < _bundles[bundleId][i].tokenIds.length;
                 j++
             ) {
-                uint256 tokenId = _bundles[bundleId][i].tokenIds[i];
+                uint256 tokenId = _bundles[bundleId][i].tokenIds[j];
                 result ^= keccak256(abi.encodePacked(tokenId));
             }
         }
