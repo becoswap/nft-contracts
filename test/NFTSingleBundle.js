@@ -22,7 +22,7 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
     // create bundle
     await this.bundle.createBundle([1, 2]);
 
-    let bundleItems = await this.bundle.getBundleItems(1, 0, 2);
+    let bundleItems = await this.bundle.getBundleItems(1);
     assert.equal(bundleItems[0], 1);
     assert.equal(bundleItems[1], 2);
 
@@ -37,7 +37,7 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
     // add items
     await this.nft.approve(this.bundle.address, 1);
     await this.bundle.addItems(1, [1]);
-    bundleItems = await this.bundle.getBundleItems(1, 0, 2);
+    bundleItems = await this.bundle.getBundleItems(1);
     assert.equal(bundleItems[1], 1);
     bundleItemsLength = await this.bundle.bundleItemLength(1);
     assert.equal(bundleItemsLength, 2);

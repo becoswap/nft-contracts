@@ -122,17 +122,9 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
     }
 
     function getBundleItems(
-        uint256 bundleId,
-        uint256 start,
-        uint256 end
+        uint256 bundleId
     ) external view returns (uint256[] memory) {
-        uint256[] memory tokenIds = new uint256[](end - start);
-        uint256 j = 0;
-        for (uint256 i = start; i < end; i++) {
-            tokenIds[j] = _bundles[bundleId][i];
-            j++;
-        }
-        return tokenIds;
+        return _bundles[bundleId];
     }
 
     function bundleItemLength(uint256 bundleId)
