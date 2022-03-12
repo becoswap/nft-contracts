@@ -178,6 +178,10 @@ contract ERC721NFTAuction is
             auction.endTime > block.timestamp,
             "ERC721NFTAuction: auction ended"
         );
+        require(
+            _price > 0,
+            "ERC721NFTAuction: price must be greater than zero"
+        );
 
         if (auction.bidder != address(0)) {
             require(
@@ -228,6 +232,7 @@ contract ERC721NFTAuction is
      */
     function collect(address _nft, uint256 _tokenId) external nonReentrant {
         Auction memory auction = auctions[_nft][_tokenId];
+        require(auction.bidder != address(0), "ERC721NFTAuction: no bidder");
         require(
             auction.endTime < block.timestamp,
             "ERC721NFTAuction: auction not end"

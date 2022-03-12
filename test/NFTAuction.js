@@ -83,7 +83,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
             this.nft.address,
             1000,
             this.usdt.address,
-            1,
+            2,
             time + 200,
             time  + 1000
         )
@@ -130,7 +130,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
                 this.nft.address,
                 1000,
                 this.usdt.address,
-                0,
+                1,
                 { from: buyer}
             ), "ERC721NFTAuction: price must be greater than or equal bidPrice"
         )
@@ -140,7 +140,7 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
                 this.nft.address,
                 1000,
                 this.beco.address,
-                1,
+                2,
                 { from: buyer}
             ), "ERC721NFTAuction: invalid quote token"
         )
@@ -201,6 +201,50 @@ contract("NFTAuction", ([owner, buyer, buyer1, feeRecipient, RoyaltyFeeRecipient
 
         assert.equal(await this.nft.ownerOf(1000),buyer)
         assert.equal(await this.usdt.balanceOf(owner), 99)
+    })
+
+    it("Bid: zero price", async () => {
+        const time = await getLastBlockTimestamp();
+        await this.nftAuction.createAuction(
+            this.nft.address,
+            1000,
+            this.usdt.address,
+            1,
+            0,
+            time  + 1000
+        )
+
+        await expectRevert( 
+            this.nftAuction.bid(
+                this.nft.address,
+                1000,
+                this.usdt.address,
+                0,
+                { from: buyer}
+            ), "ERC721NFTAuction: price must be greater than zero"
+        )
+    })
+
+    it("Collect: no bidder", async () => {
+        const time = await getLastBlockTimestamp();
+        await this.nftAuction.createAuction(
+            this.nft.address,
+            1000,
+            this.usdt.address,
+            1,
+            time + 200,
+            time  + 1000
+        )
+
+        await mineBlockWithTS(time +1100)
+        
+        await expectRevert( 
+            this.nftAuction.collect(
+                this.nft.address,
+                1000,
+                { from: buyer}
+            ), "ERC721NFTAuction: no bidder"
+        )
     })
 
     it("Cancel Auction", async () => {
