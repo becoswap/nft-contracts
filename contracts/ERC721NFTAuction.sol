@@ -37,6 +37,11 @@ contract ERC721NFTAuction is
         address quoteToken; // quote token of the acution
     }
 
+    struct FeeRates {
+        address[] addrs;
+        uint256[] rates;
+    }
+
     event AuctionCreated(
         address indexed nft,
         address indexed seller,
@@ -66,6 +71,7 @@ contract ERC721NFTAuction is
     );
 
     mapping(address => mapping(uint256 => Auction)) public auctions;
+    mapping(address => mapping(uint256 => FeeRates)) private _feeRates;
 
     // The minimum percentage difference between the last bid amount and the current bid.
     uint8 public minBidIncrementPercentage = 5;
@@ -119,6 +125,7 @@ contract ERC721NFTAuction is
             endTime: _endTime,
             quoteToken: _quoteToken
         });
+        _setFeeRates(_nft, _tokenId);
         emit AuctionCreated(
             _nft,
             _msgSender(),
@@ -128,6 +135,35 @@ contract ERC721NFTAuction is
             _quoteToken,
             _price
         );
+    }
+
+    function _setFeeRates(address _nft, uint256 _tokenId) private {
+        if (feeProvider != address(0)) {
+            // community fees
+            address[] memory _addrs;
+            uint256[] memory _rates;
+
+            (_addrs, _rates) = IFeeProvider(feeProvider).getFees(
+                _nft,
+                _tokenId
+            );
+            require(
+                _addrs.length == _rates.length,
+                "ERC721NFTAuction: get fees error"
+            );
+            require(_addrs.length < 10, "ERC721NFTAuction: max fee recipient");
+            _feeRates[_nft][_tokenId] = FeeRates({addrs: _addrs, rates: _rates});
+        }
+    }
+
+    function getFees(address _nft, uint256 _tokenId)
+        internal
+        view
+        override
+        returns (address[] memory addrs, uint256[] memory rates)
+    {
+        addrs = _feeRates[_nft][_tokenId].addrs;
+        rates = _feeRates[_nft][_tokenId].rates;
     }
 
     /**
@@ -149,6 +185,7 @@ contract ERC721NFTAuction is
         );
         IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
         delete auctions[_nft][_tokenId];
+        delete _feeRates[_nft][_tokenId];
         emit CancelAuction(_nft, _tokenId);
     }
 
@@ -247,6 +284,7 @@ contract ERC721NFTAuction is
         uint256 netPrice = auction.bidPrice.sub(fees);
         IERC20(auction.quoteToken).safeTransfer(auction.seller, netPrice);
         delete auctions[_nft][_tokenId];
+        delete _feeRates[_nft][_tokenId];
         emit AuctionCompleted(
             _nft,
             _tokenId,

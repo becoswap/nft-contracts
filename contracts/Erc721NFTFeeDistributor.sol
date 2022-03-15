@@ -51,6 +51,15 @@ contract Erc721NFTFeeDistributor is Ownable {
         protocolFeePercent = _percent;
     }
 
+    function getFees(address _nft, uint256 _tokenId)
+        internal
+        view
+        virtual
+        returns (address[] memory addrs, uint256[] memory rates)
+    {
+        return IFeeProvider(feeProvider).getFees(_nft, _tokenId);
+    }
+
     function _distributeFees(
         address _nft,
         uint256 _tokenId,
@@ -73,7 +82,8 @@ contract Erc721NFTFeeDistributor is Ownable {
         // community fees
         address[] memory _addrs;
         uint256[] memory _rates;
-        (_addrs, _rates) = IFeeProvider(feeProvider).getFees(_nft, _tokenId);
+
+        (_addrs, _rates) = getFees(_nft, _tokenId);
         uint256 sumRates = 0;
         for (uint256 i = 0; i < _addrs.length; i++) {
             if (_addrs[i] != address(0)) {
