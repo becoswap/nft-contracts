@@ -151,7 +151,7 @@ contract ERC721NFTAuction is
                 _addrs.length == _rates.length,
                 "ERC721NFTAuction: get fees error"
             );
-            require(_addrs.length < 10, "ERC721NFTAuction: max fee recipient");
+            require(_addrs.length <= 5, "ERC721NFTAuction: max fee recipient");
             _feeRates[_nft][_tokenId] = FeeRates({addrs: _addrs, rates: _rates});
         }
     }
