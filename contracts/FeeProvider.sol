@@ -27,7 +27,7 @@ contract FeeProvider is Ownable {
 
     function setProvider(address _nft, address _provider) external onlyOwner {
         providers[_nft] = _provider;
-        SetProvider(_nft, _provider);
+        emit SetProvider(_nft, _provider);
     }
 
     function setRecipient(
