@@ -8,6 +8,7 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
   beforeEach(async () => {
     this.nft = await TestErc721.new();
     this.bundle = await ERC721NFTSingleBundle.new(this.nft.address, "A", "A");
+    await this.bundle.setBaseURI("beco.io/");
 
     await this.nft.mint(1);
     await this.nft.mint(2);
@@ -22,11 +23,11 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
     await this.bundle.createBundle([1]);
 
     await expectRevert(
-      this.bundle.updateMetdata(1, "dsads", { from: user1 }),
+      this.bundle.updateMetadata(1, "dsads", { from: user1 }),
       "ERC721NFTSingleBundle: caller is not owner nor approved"
     );
 
-    await this.bundle.updateMetdata(1, "hi");
+    await this.bundle.updateMetadata(1, "hi");
     assert.equal(await this.bundle.metadata(1), "hi");
   });
 
@@ -37,6 +38,9 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
     let bundleItems = await this.bundle.getBundleItems(1);
     assert.equal(bundleItems[0], 1);
     assert.equal(bundleItems[1], 2);
+
+    let tokenURI = await this.bundle.tokenURI(1);
+    assert.equal(tokenURI, "beco.io/1");
 
     let bundleItemsLength = await this.bundle.bundleItemLength(1);
     assert.equal(bundleItemsLength, 2);

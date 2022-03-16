@@ -6,14 +6,18 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
+
+contract ERC721NFTSingleBundle is ERC721, ERC721Holder,Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
     address public nft;
     mapping(uint256 => uint256[]) _bundles;
     mapping(uint256 => string) public metadata;
+    string public baseURI;
 
     event BundleNew(uint256 tokenId, uint256[] tokenIds);
     event BundleAdd(uint256 tokenId, uint256[] tokenIds);
@@ -141,13 +145,34 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder {
         return _bundles[bundleId].length;
     }
 
-    function updateMetdata(uint256 bundleId, string memory data) external {
+    function updateMetadata(uint256 bundleId, string memory data) external {
         require(
             _isApprovedOrOwner(_msgSender(), bundleId),
             "ERC721NFTSingleBundle: caller is not owner nor approved"
         );
         metadata[bundleId] = data;
         emit MetadataUpdate(bundleId, data);
+    }
+
+    function setBaseURI(string calldata _baseURI) external onlyOwner {
+        baseURI = _baseURI;
+    }
+
+    /**
+     * @notice Returns an URI for a given token ID.
+     * Throws if the token ID does not exist. May return an empty string.
+     * @param _tokenId - uint256 ID of the token queried
+     * @return token URI
+     */
+    function tokenURI(uint256 _tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(_exists(_tokenId), "tokenURI: INVALID_TOKEN_ID");
+        return string(abi.encodePacked(baseURI, Strings.toString(_tokenId)));
     }
 
     /**

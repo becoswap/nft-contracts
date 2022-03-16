@@ -9,6 +9,7 @@ contract("ERC721NFTBundle", ([owner, user1]) => {
     this.bundle = await ERC721NFTBundle.new();
     this.nft1 = await TestErc721.new();
     this.nft2 = await TestErc721.new();
+    await this.bundle.setBaseURI("beco.io/");
 
     await this.nft1.mint(1);
     await this.nft1.mint(2);
@@ -30,6 +31,9 @@ contract("ERC721NFTBundle", ([owner, user1]) => {
     let groups = await this.bundle.getBundle(1);
     assert.equal(groups[0][0], this.nft1.address);
     assert.equal(groups[0][1][0], 1);
+
+    let tokenURI = await this.bundle.tokenURI(1);
+    assert.equal(tokenURI, "beco.io/1");
 
     assert.equal(groups[1][0], this.nft2.address);
     assert.equal(groups[1][1][0], 1);
