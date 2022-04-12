@@ -284,7 +284,7 @@ contract(
 
     it("Only Owner", async () => {
       await expectRevert(
-        this.nftAuction.setFeeProvider(this.nft.address, { from: buyer }),
+        this.nftAuction.setCollection(this.nft.address,this.nft.address,10, { from: buyer }),
         "Ownable: caller is not the owner"
       );
       await expectRevert(
@@ -296,61 +296,6 @@ contract(
       await expectRevert(
         this.nftAuction.setProtocolFeePercent(10, { from: buyer }),
         "Ownable: caller is not the owner"
-      );
-    });
-
-    it("Royalty fee", async () => {
-      await this.feeProvider.setRecipient(
-        this.nft.address,
-        [RoyaltyFeeRecipient],
-        [100]
-      );
-
-      const time = await getLastBlockTimestamp();
-      await this.nftAuction.createAuction(
-        this.nft.address,
-        1000,
-        this.usdt.address,
-        0,
-        0,
-        time + 1000
-      );
-
-      await this.nftAuction.bid(
-        this.nft.address,
-        1000,
-        this.usdt.address,
-        100,
-        { from: buyer }
-      );
-
-      await mineBlockWithTS(time + 1100);
-
-      await this.nftAuction.collect(this.nft.address, 1000, { from: buyer });
-
-      assert.equal(await this.usdt.balanceOf(owner), 98); // seller: 98%
-      assert.equal(await this.usdt.balanceOf(RoyaltyFeeRecipient), 1); //  Royalty: 1%
-      assert.equal(await this.usdt.balanceOf(feeRecipient), 1); // protocol fee: 1%
-    });
-
-    it("should not create auction: max fee recipient", async () => {
-      const r = RoyaltyFeeRecipient;
-      await this.feeProvider.setRecipient(
-        this.nft.address,
-        [r, r, r, r, r, r],
-        [2, 2, 2, 2, 2, 2]
-      );
-      const time = await getLastBlockTimestamp();
-      await expectRevert(
-        this.nftAuction.createAuction(
-          this.nft.address,
-          1000,
-          this.usdt.address,
-          0,
-          0,
-          time + 1000
-        ),
-        "ERC721NFTAuction: max fee recipient"
       );
     });
   }

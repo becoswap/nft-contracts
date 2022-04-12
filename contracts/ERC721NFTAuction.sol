@@ -84,10 +84,9 @@ contract ERC721NFTAuction is
 
     constructor(
         address _weth,
-        address _feeProvider,
         address _feeRecipient,
         uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeProvider, _feeRecipient, _feePercent) {
+    ) Erc721NFTFeeDistributor(_feeRecipient, _feePercent) {
         WETH = _weth;
     }
 
@@ -125,7 +124,6 @@ contract ERC721NFTAuction is
             endTime: _endTime,
             quoteToken: _quoteToken
         });
-        _setFeeRates(_nft, _tokenId);
         emit AuctionCreated(
             _nft,
             _msgSender(),
@@ -135,35 +133,6 @@ contract ERC721NFTAuction is
             _quoteToken,
             _price
         );
-    }
-
-    function _setFeeRates(address _nft, uint256 _tokenId) private {
-        if (feeProvider != address(0)) {
-            // community fees
-            address[] memory _addrs;
-            uint256[] memory _rates;
-
-            (_addrs, _rates) = IFeeProvider(feeProvider).getFees(
-                _nft,
-                _tokenId
-            );
-            require(
-                _addrs.length == _rates.length,
-                "ERC721NFTAuction: get fees error"
-            );
-            require(_addrs.length <= 5, "ERC721NFTAuction: max fee recipient");
-            _feeRates[_nft][_tokenId] = FeeRates({addrs: _addrs, rates: _rates});
-        }
-    }
-
-    function getFees(address _nft, uint256 _tokenId)
-        internal
-        view
-        override
-        returns (address[] memory addrs, uint256[] memory rates)
-    {
-        addrs = _feeRates[_nft][_tokenId].addrs;
-        rates = _feeRates[_nft][_tokenId].rates;
     }
 
     /**
@@ -277,7 +246,6 @@ contract ERC721NFTAuction is
         IERC721(_nft).safeTransferFrom(address(this), auction.bidder, _tokenId);
         uint256 fees = _distributeFees(
             _nft,
-            _tokenId,
             auction.quoteToken,
             auction.bidPrice
         );

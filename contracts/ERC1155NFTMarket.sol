@@ -94,11 +94,9 @@ contract ERC1155NFTMarket is
         _;
     }
 
-    constructor(
-        address _feeProvider,
-        address _feeRecipient,
-        uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeProvider, _feeRecipient, _feePercent) {}
+    constructor(address _feeRecipient, uint256 _feePercent)
+        Erc721NFTFeeDistributor(_feeRecipient, _feePercent)
+    {}
 
     /**
      * @notice Create ask order
@@ -266,12 +264,7 @@ contract ERC1155NFTMarket is
             ""
         );
         uint256 price = offer.pricePerUnit.mul(quantity);
-        uint256 fees = _distributeFees(
-            offer.nft,
-            offer.tokenId,
-            offer.quoteToken,
-            price
-        );
+        uint256 fees = _distributeFees(offer.nft, offer.quoteToken, price);
         uint256 netPrice = price.sub(fees);
         IERC20(offer.quoteToken).safeTransfer(_msgSender(), netPrice);
         if (offer.quantity == 0) {
@@ -307,12 +300,7 @@ contract ERC1155NFTMarket is
             price
         );
 
-        uint256 fees = _distributeFees(
-            ask.nft,
-            ask.tokenId,
-            ask.quoteToken,
-            price
-        );
+        uint256 fees = _distributeFees(ask.nft, ask.quoteToken, price);
         uint256 netPrice = price.sub(fees);
         IERC20(ask.quoteToken).safeTransfer(ask.seller, netPrice);
         IERC1155(ask.nft).safeTransferFrom(

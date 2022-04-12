@@ -5,7 +5,6 @@ const TestErc20 = artifacts.require("./test/TestErc20.sol");
 const TestErc721 = artifacts.require("./test/TestErc721.sol");
 const TestWeth = artifacts.require("./test/TestWETH.sol");
 const ERC721NFTMarket = artifacts.require("./ERC721NFTMarket.sol");
-const FeeProvider = artifacts.require("./FeeProvider.sol");
 const ERC721NFTSingleBundle = artifacts.require("./ERC721NFTSingleBundle.sol");
 
 contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
@@ -14,12 +13,10 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     this.erc20 = await TestErc20.new();
     this.erc202 = await TestErc20.new();
     this.weth = await TestWeth.new();
-    this.feeProvider = await FeeProvider.new();
 
     // protocol fee: 1%
     this.nftMarket = await ERC721NFTMarket.new(
       this.weth.address,
-      this.feeProvider.address,
       feeRecipient,
       100
     );
@@ -288,34 +285,6 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     );
 
     assert.equal(await this.erc20.balanceOf(buyer), 1400);
-  });
-
-  it("Royalty fee", async () => {
-    await this.feeProvider.setRecipient(
-      this.nft.address,
-      [RoyaltyFeeRecipient],
-      [100]
-    );
-
-    await this.nftMarket.createBid(
-      this.nft.address,
-      1000,
-      this.erc20.address,
-      100,
-      "0x",
-      { from: buyer }
-    );
-    await this.nftMarket.acceptBid(
-      this.nft.address,
-      1000,
-      buyer,
-      this.erc20.address,
-      100
-    );
-
-    assert.equal(await this.erc20.balanceOf(owner), 98);
-    assert.equal(await this.erc20.balanceOf(feeRecipient), 1);
-    assert.equal(await this.erc20.balanceOf(RoyaltyFeeRecipient), 1);
   });
 
   it("setProtocolFeePercent", async () => {

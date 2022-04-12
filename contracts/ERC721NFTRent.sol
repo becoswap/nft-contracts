@@ -87,10 +87,9 @@ contract ERC721NFTRent is
     }
 
     constructor(
-        address _feeProvider,
         address _feeRecipient,
         uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeProvider, _feeRecipient, _feePercent) {}
+    ) Erc721NFTFeeDistributor(_feeRecipient, _feePercent) {}
 
     /**
      * @notice Lend NFT
@@ -175,7 +174,7 @@ contract ERC721NFTRent is
             address(this),
             price
         );
-        uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, price);
+        uint256 fees = _distributeFees(_nft, _quoteToken, price);
         uint256 netPrice = price.sub(fees);
         IERC20(_quoteToken).safeTransfer(lending.lender, netPrice);
         lendings[_nft][_tokenId].expiredAt = expiredAt;
@@ -298,7 +297,7 @@ contract ERC721NFTRent is
         }
         uint256 rentDay = offer.duration.div(86400);
         uint256 price = offer.pricePerDay.mul(rentDay);
-        uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, price);
+        uint256 fees = _distributeFees(_nft, _quoteToken, price);
         uint256 netPrice = price.sub(fees);
         uint256 expiredAt = block.timestamp.add(rentDay.mul(86400));
         IERC20(_quoteToken).safeTransfer(lender, netPrice);

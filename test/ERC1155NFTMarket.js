@@ -2,7 +2,6 @@ const expectRevert = require("@openzeppelin/test-helpers/src/expectRevert");
 const { assert } = require("chai");
 const ERC1155NFTMarket = artifacts.require("./ERC1155NFTMarket.sol");
 const TestErc1155 = artifacts.require("./TestErc1155.sol");
-const FeeProvider = artifacts.require("./FeeProvider.sol");
 const TestErc20 = artifacts.require("./test/TestErc20.sol");
 const TestWeth = artifacts.require("./test/TestWETH.sol"); 
 
@@ -13,8 +12,7 @@ contract("ERC1155NFTMarket", ([owner, buyer, feeRecipient]) => {
         this.nft = await TestErc1155.new();
         this.usd = await TestErc20.new()
         this.weth = await TestWeth.new();
-        this.feeProvider = await FeeProvider.new();
-        this.market = await ERC1155NFTMarket.new(this.feeProvider.address, feeRecipient, 250);
+        this.market = await ERC1155NFTMarket.new(feeRecipient, 250);
 
         await this.nft.mint(1, 100);
         await this.nft.setApprovalForAll(this.market.address, true);

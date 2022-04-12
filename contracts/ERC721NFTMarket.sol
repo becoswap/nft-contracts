@@ -98,10 +98,9 @@ contract ERC721NFTMarket is
 
     constructor(
         address _weth,
-        address _feeProvider,
         address _feeRecipient,
         uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeProvider, _feeRecipient, _feePercent) {
+    ) Erc721NFTFeeDistributor(_feeRecipient, _feePercent) {
         WETH = _weth;
     }
 
@@ -180,7 +179,7 @@ contract ERC721NFTMarket is
         require(ask.quoteToken == _quoteToken, "Buy: Incorrect qoute token");
         require(ask.price == _price, "Buy: Incorrect price");
         _validateFingerprint(_nft, _tokenId, _fingeprint);
-        uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, _price);
+        uint256 fees = _distributeFees(_nft, _quoteToken, _price);
         uint256 netPrice = _price.sub(fees);
         IERC20(_quoteToken).safeTransfer(ask.seller, netPrice);
         IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
@@ -239,7 +238,7 @@ contract ERC721NFTMarket is
             IERC721(_nft).safeTransferFrom(seller, _bidder, _tokenId);
         }
 
-        uint256 fees = _distributeFees(_nft, _tokenId, _quoteToken, _price);
+        uint256 fees = _distributeFees(_nft, _quoteToken, _price);
         uint256 netPrice = _price.sub(fees);
         IERC20(_quoteToken).safeTransfer(seller, netPrice);
 
