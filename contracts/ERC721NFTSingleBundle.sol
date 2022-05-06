@@ -19,7 +19,7 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder,Ownable {
     mapping(uint256 => string) public metadata;
     string public baseURI;
 
-    event BundleNew(uint256 tokenId, uint256[] tokenIds);
+    event BundleNew(uint256 tokenId, uint256[] tokenIds, string data);
     event BundleAdd(uint256 tokenId, uint256[] tokenIds);
     event BundleRemove(uint256 tokenId, uint256[] tokenIds);
     event MetadataUpdate(uint256 tokenId, string data);
@@ -36,7 +36,7 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder,Ownable {
      * @notice create bundle
      * @param tokenIds: id of tokens
      */
-    function createBundle(uint256[] memory tokenIds)
+    function createBundle(uint256[] memory tokenIds, string memory data)
         external
         returns (uint256)
     {
@@ -47,7 +47,7 @@ contract ERC721NFTSingleBundle is ERC721, ERC721Holder,Ownable {
         }
         _bundles[_tokenIds.current()] = tokenIds;
         _safeMint(_msgSender(), _tokenIds.current());
-        emit BundleNew(_tokenIds.current(), tokenIds);
+        emit BundleNew(_tokenIds.current(), tokenIds, data);
         return _tokenIds.current();
     }
 

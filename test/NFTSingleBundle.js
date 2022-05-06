@@ -20,7 +20,7 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
   });
 
   it("update metadata", async () => {
-    await this.bundle.createBundle([1]);
+    await this.bundle.createBundle([1], "");
 
     await expectRevert(
       this.bundle.updateMetadata(1, "dsads", { from: user1 }),
@@ -33,7 +33,7 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
 
   it("create bundle", async () => {
     // create bundle
-    await this.bundle.createBundle([1, 2]);
+    await this.bundle.createBundle([1, 2], "");
 
     let bundleItems = await this.bundle.getBundleItems(1);
     assert.equal(bundleItems[0], 1);
@@ -65,14 +65,14 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
   });
 
   it("remove all", async () => {
-    await this.bundle.createBundle([1, 2]);
+    await this.bundle.createBundle([1, 2], "");
     await this.bundle.removeItems(1, [1, 2]);
     bundleItemsLength = await this.bundle.bundleItemLength(1);
     assert.equal(bundleItemsLength, 0);
   });
 
   it("invalid", async () => {
-    await this.bundle.createBundle([1]);
+    await this.bundle.createBundle([1], "");
 
     await expectRevert(
       this.bundle.addItems(1, [1], { from: user1 }),
@@ -98,7 +98,7 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
   });
 
   it("fingerprint", async () => {
-    await this.bundle.createBundle([1]);
+    await this.bundle.createBundle([1], "");
 
     const fingerprint = await this.bundle.getFingerprint(1);
     assert.equal(await this.bundle.verifyFingerprint(1, fingerprint), true);

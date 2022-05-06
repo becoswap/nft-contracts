@@ -32,7 +32,7 @@ contract("NftMarket", ([owner, buyer, feeRecipient, RoyaltyFeeRecipient]) => {
     this.bundle = await ERC721NFTSingleBundle.new(this.nft.address, "1", "!");
     await this.nft.mint(2);
     await this.nft.setApprovalForAll(this.bundle.address, true);
-    await this.bundle.createBundle([2]);
+    await this.bundle.createBundle([2], "");
     await this.nftMarket.registerFingerPrintProxy(
       this.bundle.address,
       this.bundle.address

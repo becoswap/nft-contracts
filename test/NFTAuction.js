@@ -48,7 +48,6 @@ contract(
       this.feeProvider = await FeeProvider.new();
       this.nftAuction = await ERC721NFTAuction.new(
         this.weth.address,
-        this.feeProvider.address,
         feeRecipient,
         100
       );
