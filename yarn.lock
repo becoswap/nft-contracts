@@ -1389,6 +1389,11 @@
   dependencies:
     "type-fest" "^0.21.3"
 
+"ansi-font@0.0.2":
+  "integrity" "sha1-iQMBvVhBRi/TnAt3Ca/R9SUUMzE="
+  "resolved" "https://registry.npmjs.org/ansi-font/-/ansi-font-0.0.2.tgz"
+  "version" "0.0.2"
+
 "ansi-mark@^1.0.0":
   "integrity" "sha1-HNS6jVfxXxCdaq9uycqXhsik7mw="
   "resolved" "https://registry.npmjs.org/ansi-mark/-/ansi-mark-1.0.4.tgz"
@@ -9485,6 +9490,13 @@
   dependencies:
     "array-back" "^1.0.3"
     "typical" "^2.6.0"
+
+"test@^0.6.0":
+  "integrity" "sha1-WYasRF7Bd1QyJRLRBLoyyKY+k44="
+  "resolved" "https://registry.npmjs.org/test/-/test-0.6.0.tgz"
+  "version" "0.6.0"
+  dependencies:
+    "ansi-font" "0.0.2"
 
 "testrpc@0.0.1":
   "integrity" "sha512-afH1hO+SQ/VPlmaLUFj2636QMeDvPCeQMc/9RBMW0IfjNe9gFD9Ra3ShqYkB7py0do1ZcCna/9acHyzTJ+GcNA=="

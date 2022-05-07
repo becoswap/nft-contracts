@@ -10,7 +10,8 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.2.0",
-    "@openzeppelin/test-helpers": "^0.5.12"
+    "@openzeppelin/test-helpers": "^0.5.12",
+    "test": "^0.6.0"
   },
   "devDependencies": {
     "@nomiclabs/buidler": "^1.4.7",

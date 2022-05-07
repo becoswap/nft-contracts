@@ -8,16 +8,16 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./Erc721NFTFeeDistributor.sol";
+import "./ERC721NFTFeeDistributor.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import "./Erc721Fingerprint.sol";
+import "./ERC721Fingerprint.sol";
 
 contract ERC721NFTRent is
     ERC721Holder,
     Ownable,
-    Erc721NFTFeeDistributor,
+    ERC721NFTFeeDistributor,
     ReentrancyGuard,
-    Erc721Fingerprint
+    ERC721Fingerprint
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -89,7 +89,7 @@ contract ERC721NFTRent is
     constructor(
         address _feeRecipient,
         uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeRecipient, _feePercent) {}
+    ) ERC721NFTFeeDistributor(_feeRecipient, _feePercent) {}
 
     /**
      * @notice Lend NFT

@@ -12,13 +12,13 @@ import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/IERC1155.sol";
 import "@openzeppelin/contracts/token/ERC1155/utils/ERC1155Holder.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./Erc721NFTFeeDistributor.sol";
+import "./ERC721NFTFeeDistributor.sol";
 
 contract ERC1155NFTMarket is
     ReentrancyGuard,
     ERC1155Holder,
     Ownable,
-    Erc721NFTFeeDistributor
+    ERC721NFTFeeDistributor
 {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -95,7 +95,7 @@ contract ERC1155NFTMarket is
     }
 
     constructor(address _feeRecipient, uint256 _feePercent)
-        Erc721NFTFeeDistributor(_feeRecipient, _feePercent)
+        ERC721NFTFeeDistributor(_feeRecipient, _feePercent)
     {}
 
     /**

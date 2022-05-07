@@ -12,15 +12,15 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWETH.sol";
-import "./Erc721NFTFeeDistributor.sol";
-import "./Erc721Fingerprint.sol";
+import "./ERC721NFTFeeDistributor.sol";
+import "./ERC721Fingerprint.sol";
 
 contract ERC721NFTMarket is
     ERC721Holder,
     Ownable,
     ReentrancyGuard,
-    Erc721NFTFeeDistributor,
-    Erc721Fingerprint
+    ERC721NFTFeeDistributor,
+    ERC721Fingerprint
 {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -100,7 +100,7 @@ contract ERC721NFTMarket is
         address _weth,
         address _feeRecipient,
         uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeRecipient, _feePercent) {
+    ) ERC721NFTFeeDistributor(_feeRecipient, _feePercent) {
         WETH = _weth;
     }
 

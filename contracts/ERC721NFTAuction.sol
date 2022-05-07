@@ -12,14 +12,13 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IWETH.sol";
-import "./interfaces/IFeeProvider.sol";
-import "./Erc721NFTFeeDistributor.sol";
+import "./ERC721NFTFeeDistributor.sol";
 
 contract ERC721NFTAuction is
     ERC721Holder,
     Ownable,
     ReentrancyGuard,
-    Erc721NFTFeeDistributor
+    ERC721NFTFeeDistributor
 {
     using EnumerableSet for EnumerableSet.AddressSet;
     using EnumerableSet for EnumerableSet.UintSet;
@@ -35,11 +34,6 @@ contract ERC721NFTAuction is
         uint256 startTime; // start time of the auction
         uint256 endTime; // end time of the auction
         address quoteToken; // quote token of the acution
-    }
-
-    struct FeeRates {
-        address[] addrs;
-        uint256[] rates;
     }
 
     event AuctionCreated(
@@ -71,7 +65,6 @@ contract ERC721NFTAuction is
     );
 
     mapping(address => mapping(uint256 => Auction)) public auctions;
-    mapping(address => mapping(uint256 => FeeRates)) private _feeRates;
 
     // The minimum percentage difference between the last bid amount and the current bid.
     uint8 public minBidIncrementPercentage = 5;
@@ -86,7 +79,7 @@ contract ERC721NFTAuction is
         address _weth,
         address _feeRecipient,
         uint256 _feePercent
-    ) Erc721NFTFeeDistributor(_feeRecipient, _feePercent) {
+    ) ERC721NFTFeeDistributor(_feeRecipient, _feePercent) {
         WETH = _weth;
     }
 
@@ -154,7 +147,6 @@ contract ERC721NFTAuction is
         );
         IERC721(_nft).safeTransferFrom(address(this), _msgSender(), _tokenId);
         delete auctions[_nft][_tokenId];
-        delete _feeRates[_nft][_tokenId];
         emit CancelAuction(_nft, _tokenId);
     }
 
@@ -252,7 +244,7 @@ contract ERC721NFTAuction is
         uint256 netPrice = auction.bidPrice.sub(fees);
         IERC20(auction.quoteToken).safeTransfer(auction.seller, netPrice);
         delete auctions[_nft][_tokenId];
-        delete _feeRates[_nft][_tokenId];
+
         emit AuctionCompleted(
             _nft,
             _tokenId,

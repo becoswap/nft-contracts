@@ -6,7 +6,7 @@ pragma abicoder v2;
 import "./interfaces/IERC721Fingerprint.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Erc721Fingerprint is Ownable {
+contract ERC721Fingerprint is Ownable {
     mapping(address => address) public fingerprintProxies;
 
     event FingerprintProxyRegisted(address _nft, address _fingerprintProxy);
