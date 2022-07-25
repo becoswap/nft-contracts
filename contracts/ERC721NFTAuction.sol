@@ -200,10 +200,13 @@ contract ERC721NFTAuction is
             auction.quoteToken == _quoteToken,
             "ERC721NFTAuction: invalid quote token"
         );
-
-        if (auction.quoteToken == WETH && msg.value == _price) {
+        
+        // pay token
+        if (auction.quoteToken == WETH && msg.value > 0) {
+            require(msg.value == _price, "ERC721NFTAuction: value must equal price");
             IWETH(WETH).deposit{value: _price}();
         } else {
+            require(msg.value == 0, "ERC721NFTAuction: value must equal zero");
             IERC20(auction.quoteToken).safeTransferFrom(
                 _msgSender(),
                 address(this),

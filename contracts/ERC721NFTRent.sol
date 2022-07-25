@@ -11,6 +11,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "./ERC721NFTFeeDistributor.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./ERC721Fingerprint.sol";
+import "./interfaces/IWETH.sol";
 
 contract ERC721NFTRent is
     ERC721Holder,
@@ -40,6 +41,8 @@ contract ERC721NFTRent is
     mapping(address => mapping(uint256 => Lending)) public lendings;
     mapping(address => mapping(uint256 => mapping(address => Offer)))
         public offers;
+
+    address public immutable WETH;
 
     event Lend(
         address nft,
@@ -87,9 +90,12 @@ contract ERC721NFTRent is
     }
 
     constructor(
+        address _weth,
         address _feeRecipient,
         uint256 _feePercent
-    ) ERC721NFTFeeDistributor(_feeRecipient, _feePercent) {}
+    ) ERC721NFTFeeDistributor(_feeRecipient, _feePercent) {
+        WETH = _weth;
+    }
 
     /**
      * @notice Lend NFT
@@ -144,7 +150,7 @@ contract ERC721NFTRent is
         address _quoteToken,
         uint256 _pricePerDay,
         bytes32 _fingerprint
-    ) external nonReentrant notContract {
+    ) external payable nonReentrant notContract {
         Lending memory lending = lendings[_nft][_tokenId];
         require(lending.lender != address(0x0), "ERC721NFTRent: not listed");
         _validateFingerprint(_nft, _tokenId, _fingerprint);
@@ -169,17 +175,31 @@ contract ERC721NFTRent is
         uint256 expiredAt = block.timestamp.add(rentDay * 86400);
         uint256 price = _pricePerDay.mul(rentDay);
 
-        IERC20(_quoteToken).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            price
-        );
+        _pay(_quoteToken, price);
+
         uint256 fees = _distributeFees(_nft, _quoteToken, price);
         uint256 netPrice = price.sub(fees);
         IERC20(_quoteToken).safeTransfer(lending.lender, netPrice);
         lendings[_nft][_tokenId].expiredAt = expiredAt;
         lendings[_nft][_tokenId].renter = _msgSender();
         emit Rent(_nft, _tokenId, _msgSender(), expiredAt, price, netPrice);
+    }
+
+    function _pay(address _quoteToken, uint256 price) private {
+        if (_quoteToken == WETH && msg.value > 0) {
+            require(
+                msg.value == price,
+                "ERC721NFTRent: value must equal price"
+            );
+            IWETH(WETH).deposit{value: price}();
+        } else {
+            require(msg.value == 0, "ERC721NFTRent: value must equal zero");
+            IERC20(_quoteToken).safeTransferFrom(
+                _msgSender(),
+                address(this),
+                price
+            );
+        }
     }
 
     /**
@@ -197,7 +217,7 @@ contract ERC721NFTRent is
         address _quoteToken,
         uint256 _pricePerDay,
         bytes32 _fingerprint
-    ) external nonReentrant notContract {
+    ) external payable nonReentrant notContract {
         require(
             _duration >= 86400,
             "ERC721NFTRent: duration must be greater than 1 day"
@@ -213,11 +233,7 @@ contract ERC721NFTRent is
         });
         uint256 rentDay = _duration.div(86400);
         uint256 price = _pricePerDay.mul(rentDay);
-        IERC20(_quoteToken).safeTransferFrom(
-            _msgSender(),
-            address(this),
-            price
-        );
+        _pay(_quoteToken, price);
         emit OfferNew(
             _nft,
             _tokenId,
