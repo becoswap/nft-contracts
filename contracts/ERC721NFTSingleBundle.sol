@@ -8,9 +8,9 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./ERC721Operator.sol";
 
-
-contract ERC721NFTSingleBundle is ERC721, ERC721Holder,Ownable {
+contract ERC721NFTSingleBundle is ERC721Operator, ERC721Holder {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 

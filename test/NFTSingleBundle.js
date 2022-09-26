@@ -4,7 +4,7 @@ const { assert } = require("chai");
 const ERC721NFTSingleBundle = artifacts.require("./ERC721NFTSingleBundle.sol");
 const TestErc721 = artifacts.require("./test/TestErc721.sol");
 
-contract("ERC721NFTSingleBundle", ([owner, user1]) => {
+contract("ERC721NFTSingleBundle", ([owner, user,user1]) => {
   beforeEach(async () => {
     this.nft = await TestErc721.new();
     this.bundle = await ERC721NFTSingleBundle.new(this.nft.address, "A", "A");
@@ -104,4 +104,23 @@ contract("ERC721NFTSingleBundle", ([owner, user1]) => {
     assert.equal(await this.bundle.verifyFingerprint(1, fingerprint), true);
     assert.equal(await this.bundle.verifyFingerprint(1, "0x"), false);
   });
+
+  it("Operator", async() => {
+    await this.bundle.createBundle([1], "");
+    await this.bundle.setOperator(1, user);
+    assert.equal(await this.bundle.isOperator(user, 1), true)
+
+    await this.bundle.setOperatorUpdates(user,true);
+    assert.equal(await this.bundle.isOperatorUpdates(owner, user), true)
+
+
+    await this.bundle.transferFrom(owner,user1, 1)
+    assert.equal(await this.bundle.isOperator(user, 1), false)
+
+    await expectRevert(
+      this.bundle.updateMetadata(1, "data", { from: user }),
+      "ERC721NFTSingleBundle: caller is not owner nor approved"
+    );
+
+  })
 });
