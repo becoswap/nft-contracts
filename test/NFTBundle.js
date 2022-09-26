@@ -131,8 +131,8 @@ contract("ERC721NFTBundle", ([owner, user1]) => {
     );
 
     await expectRevert(
-      this.bundle.updateMetdata(1, "dsads", { from: user1 }),
-      "ERC721NFTBundle: caller is not owner nor approved"
+      this.bundle.updateMetadata(1, "dsads", { from: user1 }),
+      "ERC721Operator: only operator or owner"
     );
   });
 
@@ -142,7 +142,7 @@ contract("ERC721NFTBundle", ([owner, user1]) => {
       [this.nft2.address, [1]],
     ]);
 
-    await this.bundle.updateMetdata(1, "hi");
+    await this.bundle.updateMetadata(1, "hi");
     assert.equal(await this.bundle.metadata(1), "hi");
   });
 

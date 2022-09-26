@@ -15,7 +15,7 @@ abstract contract ERC721Operator is ERC721, Ownable {
         require(
             _isOperator(_msgSender(), tokenId) ||
                 _isApprovedOrOwner(_msgSender(), tokenId),
-            "Land: only operator or owner"
+            "ERC721Operator: only operator or owner"
         );
         _;
     }
@@ -62,15 +62,15 @@ abstract contract ERC721Operator is ERC721, Ownable {
         public
         onlyOperatorOrTokenOwner(tokenId)
     {
-        require(_operator != address(0x0), "zero address");
-        require(_tokenOperator[tokenId] != _operator, "not change");
+        require(_operator != address(0x0), "ERC721Operator: zero address");
+        require(_tokenOperator[tokenId] != _operator, "ERC721Operator: not change");
         _tokenOperator[tokenId] = _operator;
         emit SetOperator(tokenId, _operator);
     }
 
     function setOperatorUpdates(address _operator, bool approved) external {
-        require(_operator != address(0x0), "zero address");
-        require(_operator != _msgSender(), "same sender");
+        require(_operator != address(0x0), "ERC721Operator: zero address");
+        require(_operator != _msgSender(), "ERC721Operator: same sender");
         _operatorUpdates[_msgSender()][_operator] = approved;
         emit SetOperatorUpdates(_msgSender(), _operator, approved);
     }

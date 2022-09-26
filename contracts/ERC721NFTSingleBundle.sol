@@ -145,11 +145,7 @@ contract ERC721NFTSingleBundle is ERC721Operator, ERC721Holder {
         return _bundles[bundleId].length;
     }
 
-    function updateMetadata(uint256 bundleId, string memory data) external {
-        require(
-            _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721NFTSingleBundle: caller is not owner nor approved"
-        );
+    function updateMetadata(uint256 bundleId, string memory data) external onlyOperatorOrTokenOwner(bundleId) {
         metadata[bundleId] = data;
         emit MetadataUpdate(bundleId, data);
     }

@@ -24,7 +24,7 @@ contract("ERC721NFTSingleBundle", ([owner, user,user1]) => {
 
     await expectRevert(
       this.bundle.updateMetadata(1, "dsads", { from: user1 }),
-      "ERC721NFTSingleBundle: caller is not owner nor approved"
+      "ERC721Operator: only operator or owner"
     );
 
     await this.bundle.updateMetadata(1, "hi");
@@ -119,7 +119,7 @@ contract("ERC721NFTSingleBundle", ([owner, user,user1]) => {
 
     await expectRevert(
       this.bundle.updateMetadata(1, "data", { from: user }),
-      "ERC721NFTSingleBundle: caller is not owner nor approved"
+      "ERC721Operator: only operator or owner"
     );
 
   })

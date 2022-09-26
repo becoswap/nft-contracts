@@ -10,7 +10,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./ERC721Operator.sol";
 
-
 contract ERC721NFTBundle is ERC721Operator, ERC721Holder {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -31,11 +30,10 @@ contract ERC721NFTBundle is ERC721Operator, ERC721Holder {
 
     constructor() ERC721("BecoNFTBundle", "BNU") {}
 
-    function updateMetdata(uint256 bundleId, string memory data) external {
-        require(
-            _isApprovedOrOwner(_msgSender(), bundleId),
-            "ERC721NFTBundle: caller is not owner nor approved"
-        );
+    function updateMetadata(uint256 bundleId, string memory data)
+        external
+        onlyOperatorOrTokenOwner(bundleId)
+    {
         metadata[bundleId] = data;
         emit MetadataUpdate(bundleId, data);
     }
@@ -203,7 +201,6 @@ contract ERC721NFTBundle is ERC721Operator, ERC721Holder {
         require(_exists(_tokenId), "tokenURI: INVALID_TOKEN_ID");
         return string(abi.encodePacked(baseURI, Strings.toString(_tokenId)));
     }
-
 
     /**
      * @dev Creates a checksum of the contents of the Bundle
