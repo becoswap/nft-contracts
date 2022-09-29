@@ -345,7 +345,7 @@ contract ERC721NFTRent is
         address _operator
     ) external {
         require(lendings[_nft][_tokenId].renter == _msgSender(), "only renter");
-        require(lendings[_nft][_tokenId].expiredAt <= block.timestamp, "expired");
+        require(lendings[_nft][_tokenId].expiredAt >= block.timestamp, "expired");
         _setOperator(_nft, _tokenId, _operator);
     }
 
