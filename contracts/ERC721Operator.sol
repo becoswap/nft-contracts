@@ -62,7 +62,6 @@ abstract contract ERC721Operator is ERC721, Ownable {
         public
         onlyOperatorOrTokenOwner(tokenId)
     {
-        require(_operator != address(0x0), "ERC721Operator: zero address");
         require(_tokenOperator[tokenId] != _operator, "ERC721Operator: not change");
         _tokenOperator[tokenId] = _operator;
         emit SetOperator(tokenId, _operator);

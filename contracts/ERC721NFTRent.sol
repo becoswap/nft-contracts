@@ -12,6 +12,7 @@ import "./ERC721NFTFeeDistributor.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "./ERC721Fingerprint.sol";
 import "./interfaces/IWETH.sol";
+import "./interfaces/IERC721Operator.sol";
 
 contract ERC721NFTRent is
     ERC721Holder,
@@ -38,6 +39,7 @@ contract ERC721NFTRent is
         bytes32 fingerprint;
     }
 
+    mapping(address => bool) private _isSupportSetOperator;
     mapping(address => mapping(uint256 => Lending)) public lendings;
     mapping(address => mapping(uint256 => mapping(address => Offer)))
         public offers;
@@ -95,6 +97,13 @@ contract ERC721NFTRent is
         uint256 _feePercent
     ) ERC721NFTFeeDistributor(_feeRecipient, _feePercent) {
         WETH = _weth;
+    }
+
+    function setSupportSetOperator(address _nft, bool enabled)
+        external
+        onlyOwner
+    {
+        _isSupportSetOperator[_nft] = enabled;
     }
 
     /**
@@ -182,6 +191,7 @@ contract ERC721NFTRent is
         IERC20(_quoteToken).safeTransfer(lending.lender, netPrice);
         lendings[_nft][_tokenId].expiredAt = expiredAt;
         lendings[_nft][_tokenId].renter = _msgSender();
+        _setOperator(_nft, _tokenId, address(0x0));
         emit Rent(_nft, _tokenId, _msgSender(), expiredAt, price, netPrice);
     }
 
@@ -325,7 +335,28 @@ contract ERC721NFTRent is
             quoteToken: _quoteToken,
             pricePerDay: _pricePerDay
         });
+        _setOperator(_nft, _tokenId, address(0x0));
         emit OfferAccept(_nft, _tokenId, renter, expiredAt, price, netPrice);
+    }
+
+    function setOperator(
+        address _nft,
+        uint256 _tokenId,
+        address _operator
+    ) external {
+        require(lendings[_nft][_tokenId].renter == _msgSender(), "only renter");
+        require(lendings[_nft][_tokenId].expiredAt <= block.timestamp, "expired");
+        _setOperator(_nft, _tokenId, _operator);
+    }
+
+    function _setOperator(
+        address _nft,
+        uint256 _tokenId,
+        address _operator
+    ) private {
+        if (_isSupportSetOperator[_nft]) {
+            IERC721Operator(_nft).setOperator(_tokenId, _operator);
+        }
     }
 
     function _isContract(address _addr) internal view returns (bool) {
